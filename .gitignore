@@ -1,0 +1,66 @@
+# --- Python / FastAPI ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+build/
+dist/
+pip-wheel-metadata/
+.eggs/
+.cache/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.pyre/
+.pytype/
+.coverage*
+htmlcov/
+.venv
+.qodo
+__pycache__
+
+# Uvicorn/Logs
+*.log
+logs/
+*.pid
+
+# --- Environments ---
+.env
+.env.*
+*.secret
+secrets.json
+.venv/
+venv/
+env/
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# --- Notebooks ---
+.ipynb_checkpoints/
+
+# --- Project data (big, generated, or local) ---
+# Keep repo clean: do not commit raw docs, generated chunks/embeddings, FAISS, or runtime copies.
+data/raw/**
+data/processed/**
+data/index/**
+data/runtime/**
+
+# But allow placeholder keepers so the folders exist in git
+!data/.gitkeep
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/index/.gitkeep
+!data/runtime/.gitkeep
+
+# --- Workspaces (ephemeral sandboxes) ---
+**/workspaces/**
+**/uploads/**
+
+# --- Models / caches (optional, if
