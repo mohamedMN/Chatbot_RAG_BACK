@@ -26,6 +26,6 @@ pytesseract    # <= ajoute si tu veux l’OCR
 sentence-transformers
 PyPDF2
 python-dotenv
-
+langchain-groq
 
 

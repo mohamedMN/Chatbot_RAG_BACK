@@ -1,0 +1,107 @@
+Base (FR, general)
+
+« C’est quoi webMethods, en 3 phrases ? »
+
+« Donne-moi un glossaire rapide (UM, IS, Broker, API Gateway). »
+
+« Résume ce document que je viens d’uploader en 5 puces. »
+
+« Donne un exemple d’architecture webMethods pour intégration SAP ↔ CRM. »
+
+« Compare UM vs Kafka : quand choisir l’un ou l’autre ? »
+
+Troubleshooting / how-to
+
+« Comment diagnostiquer une latence élevée sur Universal Messaging ? »
+
+« Quelles sont les bonnes pratiques de gestion des connexions IS ? »
+
+« Erreur d’auth SAML/OAuth dans API GW : checklist de vérification ? »
+
+« Comment mettre en place du retry + backoff dans mes flows ? »
+
+« Où sont les logs pertinents pour tracer une requête bout-en-bout ? »
+
+Sécurité / conformité
+
+« Liste les ciphers TLS recommandés et comment les activer. »
+
+« Comment appliquer les ACL fines sur un channel UM ? »
+
+« Quelles options pour signer/chiffrer les messages (au repos/en transit) ? »
+
+« Donne une politique minimale RBAC pour un environnement de test. »
+
+Performances / capacity
+
+« Comment dimensionner le cluster UM pour 10k msg/s ? »
+
+« Quels paramètres IS impactent le throughput (thread pool, queue sizes…) ? »
+
+« Donne un plan de bench et des métriques à suivre (TPS, p95, p99). »
+
+Opérations / déploiement
+
+« Pipeline CI/CD recommandé pour déployer des packages IS. »
+
+« Check-list de mise en prod (rollback, sauvegarde, monitoring). »
+
+« Comment activer des healthchecks et des probes K8s pour IS/UM ? »
+
+« Rebuild index : que fait cette action et quand l’utiliser ? »
+
+RAG / Workspace (tes features)
+
+« Crée un nouveau workspace et explique ce que je dois faire ensuite. »
+
+« J’ai déposé 3 PDF : montre-moi les 5 passages les plus pertinents. »
+
+« Quelle est la source et le score de similarité pour ta réponse ? »
+
+« Résume ce PDF et propose 3 actions concrètes. »
+
+« Montre la date d’upload et le workspace utilisés pour cette réponse. »
+
+Analytics (les 4 KPI + filtres)
+
+« Donne Total Sessions, Total Messages, Average Session Time, Unique Customers sur les 7 derniers jours. »
+
+« Filtre sur le workspace ws-demo entre 2025-10-01 et 2025-10-11. »
+
+« Graphique messages/jour la semaine passée (si dispo). »
+
+« Explique comment est calculé Average Session Time. »
+
+« Quels jours ont eu le plus de sessions ? »
+
+Admin / configuration (runtime-config.txt)
+
+« Affiche la configuration courante (TEMPERATURE, TOP_P, RETRIEVAL_TOP_K…). »
+
+« Mets TEMPERATURE=0.2 et RETRIEVAL_TOP_K=12 puis confirme. »
+
+« Rétablis les valeurs par défaut du retrieval. »
+
+« Montre le chemin du fichier de config et les clés reconnues. »
+
+Qualité / évaluation
+
+« Donne le Top-K moyen, similarité moyenne et temps moyen de réponse. »
+
+« Pourquoi as-tu répondu “non sûr” à cette question ? Propose une amélioration. »
+
+« Quelles sources auraient amélioré la réponse ? Donne des formats attendus. »
+
+Données sensibles / limites (test des gardes-fous)
+
+« Y a-t-il des informations confidentielles dans ces documents ? »
+
+« Quelles questions refuseras-tu et pourquoi (politique de sécurité) ? »
+
+Prompts “structurels” (pour de bonnes réponses)
+
+« Réponds en français, en 5 puces max, cite la source avec le score. »
+
+« Si tu n’es pas sûr, demande une clarification avant de répondre. »
+
+« Formate la réponse avec un tableau : colonne ‘Action’, ‘Impact’, ‘Source’. »

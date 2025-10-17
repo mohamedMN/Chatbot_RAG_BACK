@@ -158,6 +158,11 @@ def me(request: Request) -> AuthResponse:
             "role") else "user")
 
     return AuthResponse(user_id=sess["user_id"], email=sess["email"], role=role)
+    # return AuthResponse(
+    #     user_id="17660980-26d5-4792-97b8-88466ac45042",
+    #     email="mohamed@orange.com",
+    #     role="admin",
+    # )
 
 
 @router.post("/logout")

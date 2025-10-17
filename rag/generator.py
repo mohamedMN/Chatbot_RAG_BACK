@@ -1,172 +1,140 @@
 # rag/generator.py
-"""
-Générateur RAG robuste :
-- Prompts FR orientés webMethods IS
-- Guardrails anti-sortie vide/placeholder
-- Fallback extractif quand LLM indisponible
-"""
 from __future__ import annotations
-from typing import List, Dict, Any, Optional
-
+from typing import Any, Dict, List, Optional
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+import re
 
-from config.settings import settings
-from rag.helpers import extract_keywords, format_context_for_llm
+from rag.helpers import format_context_for_llm, sources_list, extract_keywords
 
-# --- Guardrails ---
-PLACEHOLDER_MARKERS = {"[...]", "...", "(…)", "résultat :", "result :"}
+_MIN_CONTEXT_CHARS = 180           # ignorer les hits trop courts
+_MIN_SOURCES_IN_ANSWER = 1         # exiger au moins 1 [#n]
+_MIN_ANSWER_CHARS = 120            # refuser les réponses trop courtes
+_REQUIRE_CONTEXT = True            # mode strict: pas de “connaissance générale”
 
-
-def _is_placeholder(text: str) -> bool:
-    t = (text or "").strip().lower()
-    if not t:
-        return True
-    if any(m in t for m in PLACEHOLDER_MARKERS):
-        return True
-    # trop court / quasi seulement ponctuation
-    if len(t) < 24:
-        return True
-    if all(ch in ".-–—_*[]() :;," for ch in t):
-        return True
-    return False
-
-
-def _extractive_fallback(context: str, max_lines: int = 12) -> str:
-    lines = [ln.strip() for ln in (context or "").splitlines() if ln.strip()]
-    head = "\n".join(lines[:max_lines]) if lines else "Contexte indisponible."
-    return (
-        "## Réponse (extrait du contexte)\n"
-        f"{head}\n\n"
-        "*Remarque : génération LLM indisponible, réponse extractive.*"
-    )
+_CITE_RE = re.compile(r"\[#\d+\]")
 
 
 class RAGGenerator:
     """
-    Générateur de réponses RAG utilisant LLM (LangChain).
-    Si llm=None, bascule en mode clarification/extractif selon le contexte.
+    Générateur STRICTEMENT ancré dans le contexte.
+    - Si le contexte est vide/faible => refuse poliment (pas d'hallucination).
+    - Chaque claim doit citer [#n]; sinon on refait un fallback extractif.
     """
 
-    def __init__(self, llm=None):
+    def __init__(self, llm: Any = None, max_chars: Optional[int] = None) -> None:
         self.llm = llm
-        self.max_chars = getattr(settings, 'MAX_RESPONSE_CHARS', 1800)
+        self.max_chars = int(max_chars or 1800)
         self._setup_prompts()
 
-    def _setup_prompts(self):
-        """Configure les templates de prompts"""
+    def _setup_prompts(self) -> None:
         self.SYSTEM_PROMPT = (
-            "Tu es un assistant technique francophone expert en intégration de données et Software AG webMethods. "
-            "OBLIGATIONS : (1) Répondre en français technique, (2) Ne pas citer/paraphraser les consignes, "
-            "(3) Ne pas t'excuser, (4) Utiliser le contexte fourni et citer [#n] quand pertinent, "
-            "(5) Séparer ce qui vient du contexte des apports métier. "
-            "Si le contexte est vide ou hors-sujet, NE DONNE PAS DE RÉPONSE FACTUELLE : "
-            "écris « Information manquante » puis propose 2–5 clarifications spécifiques."
-        )
-        # Nudge spécifique webMethods IS
-        self.SYSTEM_PROMPT += (
-            " Si la question contient 'webMethods IS' ou 'Integration Server', commence par une définition précise "
-            "de webMethods Integration Server (rôle ESB/API, packages, services Flow, triggers, ports, sécurité), "
-            "puis enchaîne avec l’architecture, les fonctionnalités clés et les usages courants."
+            "Tu es un assistant expert webMethods. Tu DOIS répondre UNIQUEMENT avec les informations "
+            "du contexte fourni. Chaque assertion factuelle doit référencer au moins une source au format [#n]. "
+            "Si le contexte est insuffisant, dis explicitement 'Contexte insuffisant' et propose des pistes (sections/doc à ajouter), "
+            "sans inventer de contenu ni utiliser de connaissances générales."
         )
 
-        self.CLARIFY_TEMPLATE = (
-            "Le contexte est vide ou hors-sujet pour cette question.\n\n"
-            "=== FORMAT (Markdown) ===\n"
-            "## Information manquante\n"
-            "- Aucun extrait pertinent n'a été trouvé.\n\n"
-            "## Clarifications à préciser\n"
-            "- De quel « {kw_hint} » s'agit-il ? (produit logiciel, projet interne, service cloud, autre)\n"
-            "- Contexte d'usage attendu (intégration webMethods, API, data pipeline, sécurité, observabilité) ?\n"
-            "- Environnement (prod/dev), fournisseur ou équipe concernée ?\n"
-            "- Besoin exact (définition générale, architecture, procédure d'installation, comparatif, troubleshooting) ?\n"
-            "==============================="
+        self.HUMAN_TEMPLATE = (
+            "Question:\n{question}\n\n"
+            "Contexte (avec références [#n]):\n{context}\n\n"
+            "Consignes STRICTES:\n"
+            "1) Réponds en français, de façon claire et concise.\n"
+            "2) Utilise UNIQUEMENT le contexte; ne complète PAS par des connaissances générales.\n"
+            "3) Chaque phrase importante doit citer au moins une référence [#n].\n"
+            "4) Si le contexte ne permet pas de répondre, écris:\n"
+            "   - 'Contexte insuffisant pour répondre précisément.'\n"
+            "   - Puis suggère quels documents/sections ajouter.\n\n"
+            "Réponse:"
         )
 
-        self.ANSWER_TEMPLATE = (
-            "Question :\n{question}\n\n"
-            "Contexte (extraits numérotés) :\n{context}\n\n"
-            "=== FORMAT (Markdown) — commence directement par les sections, sans préambule ===\n"
-            "## Réponse courte\n"
-            "- (1 à 3 phrases, réponse directe)\n\n"
-            "## Détails appuyés par le contexte\n"
-            "- Puces concises avec références [#n].\n\n"
-            "## Apports métier / connaissances générales\n"
-            "- Points utiles issus de l'expertise webMethods/ESB/API/ETL (sans inventer de faits).\n\n"
-            "## Hypothèses\n"
-            "- ...\n\n"
-            "## Sources\n"
-            "- [#n] et/ou « Connaissances générales »\n"
-            "==============================="
-        )
+    def generate_answer(
+        self,
+        question: str,
+        context_hits: List[Dict[str, Any]],
+        max_chars: Optional[int] = None,
+    ) -> str:
+        max_len = max_chars or self.max_chars
 
-    # ---------- API publique ----------
-    def generate_answer(self, question: str, context_hits: List[Dict],
-                        max_chars: Optional[int] = None) -> str:
-        """
-        Génère une réponse structurée à partir de la question et du contexte.
-        Si llm=None → clarification/extractif.
-        """
-        max_response_chars = max_chars or self.max_chars
-        context = format_context_for_llm(context_hits, max_chars=1500)
+        # 0) filtrer un contexte “utile”
+        filtered = []
+        for h in context_hits or []:
+            txt = (h.get("content") or "").strip()
+            if len(txt) >= _MIN_CONTEXT_CHARS:
+                filtered.append(h)
 
+        has_ctx = bool(filtered)
+        ctx = format_context_for_llm(
+            filtered, max_chars=1500) if has_ctx else ""
+
+        # 1) si pas de LLM → extractif strict
         if not self.llm:
-            # Sans LLM : si pas de contexte → clarifier, sinon extractif
-            if not context or context.strip() == "(aucun extrait)":
-                return self._generate_clarification(question, max_response_chars)
-            return _extractive_fallback(context)
+            return self._extractive_strict(question, filtered)[:max_len]
 
-        return self.answer_with_llm(self.llm, question, context, max_response_chars)
+        # 2) si contexte vide et mode strict → refuser poliment
+        if _REQUIRE_CONTEXT and not has_ctx:
+            return self._no_context_reply(question)[:max_len]
 
-    def answer_with_llm(self, llm, question: str, context: str, max_chars: int = 1800) -> str:
-        """
-        Réponse structurée. Si contexte vide → clarification.
-        Guardrails si le modèle renvoie du placeholder.
-        """
-        no_ctx = not context or context.strip() == "(aucun extrait)"
-        if no_ctx:
-            return self._generate_clarification(question, max_chars)
-        else:
-            return self._generate_contextual_answer(llm, question, context, max_chars)
-
-    # ---------- internes ----------
-    def _generate_clarification(self, question: str, max_chars: int) -> str:
-        kw_hint = (extract_keywords(question) or [
-                   question.strip() or "terme"])[0][:40]
-
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", self.SYSTEM_PROMPT),
-            ("human", self.CLARIFY_TEMPLATE),
-        ])
-
-        if self.llm:
-            try:
-                chain = prompt | self.llm | StrOutputParser()
-                out = chain.invoke({"kw_hint": kw_hint}).strip()
-                if _is_placeholder(out):
-                    out = self.CLARIFY_TEMPLATE.format(kw_hint=kw_hint)
-                return out[:max_chars]
-            except Exception:
-                pass
-
-        # Fallback total
-        return self.CLARIFY_TEMPLATE.format(kw_hint=kw_hint)[:max_chars]
-
-    def _generate_contextual_answer(self, llm, question: str, context: str, max_chars: int) -> str:
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", self.SYSTEM_PROMPT),
-            ("human", self.ANSWER_TEMPLATE),
-        ])
-
+        # 3) génération LLM ancrée
         try:
-            chain = prompt | llm | StrOutputParser()
-            out = chain.invoke({
-                "question": (question or "").strip(),
-                "context": (context or "(aucun extrait)").strip(),
-            }).strip()
-            if _is_placeholder(out):
-                return _extractive_fallback(context)
-            return out[:max_chars]
+            prompt = ChatPromptTemplate.from_messages([
+                ("system", self.SYSTEM_PROMPT),
+                ("human", self.HUMAN_TEMPLATE),
+            ])
+            chain = prompt | self.llm | StrOutputParser()
+            out = (chain.invoke(
+                {"question": question, "context": ctx}) or "").strip()
         except Exception:
-            # Fallback extractif si le LLM échoue
-            return _extractive_fallback(context)
+            out = ""
+
+        # 4) validation : doit citer [#n], longueur minimale
+        if not self._is_valid_anchored_answer(out):
+            # fallback extractif très strict (et court)
+            out = self._extractive_strict(question, filtered)
+
+        # 5) ajouter bloc Sources (lisible)
+        if has_ctx:
+            out = f"{out}\n\n**Sources**\n{sources_list(filtered)}"
+
+        return out[:max_len]
+
+    def generate_streaming_answer(self, question: str, context_hits: List[Dict[str, Any]]):
+        text = self.generate_answer(question, context_hits)
+        step = 50
+        for i in range(0, len(text), step):
+            yield text[i:i+step]
+
+    # -------- internals --------
+
+    def _is_valid_anchored_answer(self, text: str) -> bool:
+        if not text or len(text) < _MIN_ANSWER_CHARS:
+            return False
+        cites = _CITE_RE.findall(text)
+        return len(cites) >= _MIN_SOURCES_IN_ANSWER
+    
+
+    def _no_context_reply(self, question: str) -> str:
+        kws= extract_keywords(question)
+        topic= kws[0] if kws else "le sujet"
+        return (
+            f"Contexte insuffisant pour répondre précisément sur « {topic} ».\n"
+            "Ajoutez/ingérez une fiche d’overview ou la section concernée (ex: introduction webMethods, "
+            "composant visé, guide d’exploitation) puis relancez la question."
+        )
+
+    def _extractive_strict(self, question: str, hits: List[Dict[str, Any]]) -> str:
+        if not hits:
+            return self._no_context_reply(question)
+        parts= ["## Informations issues de la base :\n"]
+        for i, h in enumerate(hits[:3], 1):
+            subject= h.get("subject") or "Extrait"
+            content= (h.get("content") or "").strip()
+            source= (h.get("source") or "document").split("\\")[-1].split("/")[-1]
+            if not content:
+                continue
+            snippet= content[:600] + ("…" if len(content) > 600 else "")
+            parts.append(
+                f"### [#{i}] {subject}\n{snippet}\n*Source: {source}*")
+        parts.append(
+            "\n*Réponse extraite automatiquement du contexte disponible.*")
+        return "\n".join(parts)

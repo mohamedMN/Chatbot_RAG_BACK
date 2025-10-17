@@ -119,10 +119,16 @@ class RAGSettings:
     # --- Config retrieval/FAISS ---
     def get_retrieval_config(self) -> dict:
         return {
-            "top_k": RETRIEVAL_TOP_K,
-            "min_score": RETRIEVAL_MIN_SCORE,
-            "normalize": RETRIEVAL_NORMALIZE,
-            "metric": RETRIEVAL_METRIC,
+            "top_k": 6,
+            "min_score": 0.30,
+            "normalize": True,
+            "w_sim": 0.6,
+            "w_kw": 0.25,
+            "w_title": 0.15,
+            "min_cosine": 0.28,
+            "min_final": 0.35,
+            "llm_rerank": True,
+            "llm_rerank_k": 10
         }
 
     def get_faiss_config(self) -> dict:

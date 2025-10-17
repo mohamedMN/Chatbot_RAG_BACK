@@ -21,6 +21,7 @@ chatbot_rag/
 │   ├── models.py            # Modèles Pydantic
 │   ├── auth.py              # Auth avec Supabase
 │   ├── database.py          # Interface Supabase
+│   └── runtime_llm.py        # choix entre cloud or local  
 │   └── config.py 
 ├── config/
 │   ├── __init__.py

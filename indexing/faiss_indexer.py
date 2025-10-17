@@ -129,73 +129,59 @@ class FAISSIndexer:
 
         return embeddings_matrix, idmap_data
 
-    def save_index(self, index_path: Optional[Path] = None,
-                   idmap_path: Optional[Path] = None,
-                   metadata_path: Optional[Path] = None) -> None:
+
+    def save_index(self) -> None:
         """
-        Sauvegarde l'index et les métadonnées
-        
-        Args:
-            index_path: Chemin de l'index FAISS (optionnel)
-            idmap_path: Chemin des métadonnées (optionnel)
-            metadata_path: Chemin des métadonnées d'index (optionnel)
+        Persist FAISS index + sidecar files to disk.
+        Ensures target directories exist.
         """
         if self.index is None:
-            raise ValueError("Aucun index à sauvegarder")
+            raise RuntimeError("FAISS index not built")
+        if self.idmap is None:
+            raise RuntimeError("idmap is not set")
+        if self.metadata is None:
+            raise RuntimeError("metadata is not set")
 
-        # Utilise les chemins par défaut si non spécifiés
-        idx_path = index_path or settings.faiss_index_path
-        id_path = idmap_path or settings.idmap_path
-        meta_path = metadata_path or settings.metadata_path
+        idx_path = Path(settings.faiss_index_path)
+        idmap_path = Path(settings.idmap_path)
+        meta_path = Path(settings.metadata_path)
 
-        # Sauvegarde l'index FAISS
+        # make sure folders exist
+        idx_path.parent.mkdir(parents=True, exist_ok=True)
+        idmap_path.parent.mkdir(parents=True, exist_ok=True)
+        meta_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # write FAISS binary
         faiss.write_index(self.index, str(idx_path))
-        print(f"Index FAISS sauvegardé: {idx_path}")
 
-        # Sauvegarde l'idmap
-        save_json(self.idmap, id_path)
-        print(f"Idmap sauvegardé: {id_path}")
-
-        # Sauvegarde les métadonnées
-        save_json(self.metadata, meta_path)
-        print(f"Métadonnées sauvegardées: {meta_path}")
-
-    def load_index(self, index_path: Optional[Path] = None,
-                   idmap_path: Optional[Path] = None,
-                   metadata_path: Optional[Path] = None) -> bool:
-        """
-        Charge un index existant
+        # write sidecars
+        save_json(self.idmap, idmap_path)
+        save_json(self.metadata, meta_path)  # <-- was self.meta (bug)
         
-        Args:
-            index_path: Chemin de l'index FAISS
-            idmap_path: Chemin de l'idmap
-            metadata_path: Chemin des métadonnées
-            
-        Returns:
-            True si chargé avec succès
-        """
-        # Utilise les chemins par défaut si non spécifiés
-        idx_path = index_path or settings.faiss_index_path
-        id_path = idmap_path or settings.idmap_path
-        meta_path = metadata_path or settings.metadata_path
+    def load_index(self, index_path: Optional[Path] = None,
+                    idmap_path: Optional[Path] = None,
+                    metadata_path: Optional[Path] = None) -> bool:
+        idx_path = Path(index_path or settings.faiss_index_path)
+        id_path = Path(idmap_path or settings.idmap_path)
+        meta_path = Path(metadata_path or settings.metadata_path)
 
         try:
-            # Vérifie que tous les fichiers existent
-            if not all(p.exists() for p in [idx_path, id_path, meta_path]):
+            if not (idx_path.exists() and id_path.exists() and meta_path.exists()):
                 return False
 
-            # Charge l'index FAISS
             self.index = faiss.read_index(str(idx_path))
-
-            # Charge l'idmap
             self.idmap = load_json(id_path)
-
-            # Charge les métadonnées
             self.metadata = load_json(meta_path)
 
-            print(f"Index chargé: {self.metadata['total_vectors']} vecteurs")
-            return True
+            # Minimal validation
+            if not isinstance(self.idmap, dict) or "ids" not in self.idmap:
+                raise RuntimeError("Corrupt idmap")
+            if not isinstance(self.metadata, dict) or "total_vectors" not in self.metadata:
+                raise RuntimeError("Corrupt metadata")
 
+            print(
+                f"Index chargé: {self.metadata.get('total_vectors', '?')} vecteurs")
+            return True
         except Exception as e:
             print(f"Erreur lors du chargement de l'index: {e}")
             return False

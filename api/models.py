@@ -51,7 +51,8 @@ class AskRequest(BaseModel):
     k: int = Field(4, ge=1, le=20)
     min_score: Optional[float] = Field(None)
     include_context: bool = Field(True)
-
+    session_id: Optional[str] = None      # NEW
+    workspace: Optional[str] = None  
 
 class Hit(BaseModel):
     score: float
@@ -69,4 +70,5 @@ class AskResponse(BaseModel):
     hits: List[Hit]
     context: Optional[str] = None
     answer: str
+    session_id: Optional[str] = None      # NEW: return the session we used
     debug: Optional[dict] = None
