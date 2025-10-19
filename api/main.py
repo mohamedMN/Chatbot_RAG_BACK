@@ -20,7 +20,7 @@ log = logging.getLogger("chatbot_rag.api")
 
 # Include routers
 api_router.include_router(auth_router, prefix="/auth", tags=["auth"])
-api_router.include_router(ask_router,  prefix="/ask",  tags=["ask"])
+api_router.include_router(ask_router,  prefix="/ask")
 api_router.include_router(admin_router, prefix="/admin", tags=["admin"])
 api_router.include_router(workspaces_router)
 api_router.include_router(llm_router)  # Already has prefix="/llm" in the file

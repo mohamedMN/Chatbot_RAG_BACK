@@ -38,17 +38,19 @@ def add_upload_to_workspace(p: WorkspacePaths, file: UploadFile) -> Path:
 
 
 # --------------------- Build (copy base -> add docs -> reindex) ---------------------
-def build_workspace_from_uploads(p: WorkspacePaths) -> Dict[str, Any]:
-    """
-    Steps:
-      1) Read workspace uploads -> new chunks
-      2) Merge new chunks with workspace processed/chunks.json
-      3) Embed only new chunks; merge with workspace embeddings.json
-      4) Rebuild FAISS at workspace/index
-      5) Build idmap.json & metadata.json
-    """
+def build_workspace_from_uploads(
+    p: WorkspacePaths,
+    max_new_docs: int | None = None,
+    max_new_chunks: int | None = None,
+) -> Dict[str, Any]:
     # 1) Read uploads
-    new_chunks = _extract_chunks_from_uploads(p)
+    new_chunks = _extract_chunks_from_uploads(
+        p, max_docs=max_new_docs, max_chunks=max_new_chunks)
+
+    # collect which files produced chunks
+    sources_indexed = sorted({(ch.get("source") or "").strip()
+                             for ch in new_chunks if ch.get("source")})
+
     # 2) Merge with existing chunks
     all_chunks, new_count = _merge_chunks(p.chunks, new_chunks)
     p.chunks.write_text(json.dumps(
@@ -56,11 +58,8 @@ def build_workspace_from_uploads(p: WorkspacePaths) -> Dict[str, Any]:
 
     # 3) Embed
     model = SentenceTransformer(EMBEDDING_MODEL)
-    # {"vectors":[[...]], "dim":384}
     embeddings = _load_embeddings_json(p.embeddings)
     vectors = embeddings.get("vectors", [])
-
-    start_idx = len(vectors)
     new_texts = [c["content"] for c in new_chunks]
     if new_texts:
         new_vecs = model.encode(
@@ -69,14 +68,13 @@ def build_workspace_from_uploads(p: WorkspacePaths) -> Dict[str, Any]:
             new_vecs = new_vecs.astype("float32")
         for v in new_vecs:
             vectors.append(v.tolist())
-
     merged_embeddings = {"vectors": vectors, "dim": EMBEDDING_DIMENSION}
     p.embeddings.write_text(json.dumps(merged_embeddings), encoding="utf-8")
 
     # 4) Rebuild FAISS
     _build_faiss_from_embeddings(p, vectors)
 
-    # 5) idmap + metadata aligned with chunks
+    # 5) idmap + metadata
     idmap, metadata = _build_idmap_and_metadata(all_chunks)
     p.idmap.write_text(json.dumps(
         idmap, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -85,6 +83,7 @@ def build_workspace_from_uploads(p: WorkspacePaths) -> Dict[str, Any]:
 
     return {
         "uploads": len(list(p.uploads.glob("*"))),
+        "sources_indexed": sources_indexed,    # <-- NEW
         "new_chunks": new_count,
         "total_chunks": len(all_chunks),
         "total_vectors": len(vectors),
@@ -92,30 +91,47 @@ def build_workspace_from_uploads(p: WorkspacePaths) -> Dict[str, Any]:
     }
 
 
+
 # --------------------- helpers ---------------------
-def _extract_chunks_from_uploads(p: WorkspacePaths) -> List[Dict[str, Any]]:
-    files = list(p.uploads.glob("*"))
+def _extract_chunks_from_uploads(
+    p: WorkspacePaths,
+    max_docs: int | None = None,
+    max_chunks: int | None = None,
+) -> List[Dict[str, Any]]:
+    files = [f for f in p.uploads.glob("*") if f.is_file()]
+
+    # Optional: restrict to known text-ish types to avoid binaries
+    ALLOWED = {".txt", ".pdf", ".docx"}
+    files = [f for f in files if f.suffix.lower() in ALLOWED]
+
     if not files:
         return []
 
-    if _HAS_LOADER:
-        # Use your real loader if available
-        # expect list of dicts with 'content','source','subject'
-        docs = load_documents([str(f) for f in files])
-        return [
-            {
-                "id": i,
-                "ordinal": i,
-                "content": d.get("content", ""),
-                "source": d.get("source", str(files[i])) if isinstance(d, dict) else str(files[i]),
-                "subject": d.get("subject", ""),
-            }
-            for i, d in enumerate(docs)
-        ]
+    if max_docs is not None:
+        files = files[:max_docs]
 
-    # Fallback: minimal loader for .txt/.pdf/.docx
     chunks: List[Dict[str, Any]] = []
     ordinal = 0
+
+    if _HAS_LOADER:
+        docs = load_documents([str(f) for f in files])
+        for i, d in enumerate(docs):
+            content = d.get("content", "") if isinstance(d, dict) else ""
+            if not content:
+                continue
+            chunks.append({
+                "id": ordinal,
+                "ordinal": ordinal,
+                "content": content[:MAX_TEXT_CHARS],
+                "source": d.get("source", str(files[min(i, len(files)-1)])),
+                "subject": d.get("subject", ""),
+            })
+            ordinal += 1
+            if max_chunks is not None and len(chunks) >= max_chunks:
+                break
+        return chunks
+
+    # Fallback splitter
     for f in files:
         text = _read_text_fallback(f)
         for piece in _split_simple(text, max_chars=600, overlap=60):
@@ -127,14 +143,30 @@ def _extract_chunks_from_uploads(p: WorkspacePaths) -> List[Dict[str, Any]]:
                 "subject": f.name,
             })
             ordinal += 1
+            if max_chunks is not None and len(chunks) >= max_chunks:
+                return chunks
+
     return chunks
+
+
+
+MAX_FILE_BYTES = 5 * 1024 * 1024      # 5 MB per file (tune)
+MAX_TEXT_CHARS = 2_000_000            # 2M chars per file (tune)
 
 
 def _read_text_fallback(path: Path) -> str:
     suf = path.suffix.lower()
     try:
+        # Quick size check to skip massive/binary uploads
+        try:
+            if path.stat().st_size > MAX_FILE_BYTES:
+                return ""  # or return a short notice; we skip gigantic files
+        except Exception:
+            pass
+
         if suf == ".txt":
-            return path.read_text(encoding="utf-8", errors="ignore")
+            return path.read_text(encoding="utf-8", errors="ignore")[:MAX_TEXT_CHARS]
+
         if suf == ".pdf":
             try:
                 import PyPDF2
@@ -142,35 +174,58 @@ def _read_text_fallback(path: Path) -> str:
                 with open(path, "rb") as fp:
                     reader = PyPDF2.PdfReader(fp)
                     for page in reader.pages:
+                        if len("".join(text)) > MAX_TEXT_CHARS:
+                            break
                         text.append(page.extract_text() or "")
-                return "\n".join(text)
+                return ("\n".join(text))[:MAX_TEXT_CHARS]
             except Exception:
                 return ""
-        if suf in {".docx"}:
+
+        if suf == ".docx":
             try:
                 import docx2txt
-                return docx2txt.process(str(path)) or ""
+                return (docx2txt.process(str(path)) or "")[:MAX_TEXT_CHARS]
             except Exception:
                 return ""
-        # other types → raw bytes to string
-        return path.read_text(encoding="utf-8", errors="ignore")
+
+        # everything else: treat as text but cap
+        return path.read_text(encoding="utf-8", errors="ignore")[:MAX_TEXT_CHARS]
     except Exception:
         return ""
+
 
 
 def _split_simple(text: str, max_chars: int = 600, overlap: int = 60) -> List[str]:
     text = (text or "").strip()
     if not text:
         return []
-    chunks, i, n = [], 0, len(text)
+
+    # Safety: keep overlap sane
+    max_chars = max(1, int(max_chars))
+    overlap = max(0, min(int(overlap), max_chars - 1))
+
+    chunks: List[str] = []
+    n = len(text)
+    i = 0
+
     while i < n:
         j = min(i + max_chars, n)
-        chunk = text[i:j]
-        chunks.append(chunk)
-        i = j - overlap
-        if i <= 0:
-            i = j
+        chunks.append(text[i:j])
+
+        if j >= n:
+            # we reached the end — stop (prevents infinite loop)
+            break
+
+        # advance with overlap but always move forward
+        next_i = j - overlap
+        if next_i <= i:
+            # ensure progress even if overlap is misconfigured
+            next_i = j
+
+        i = next_i
+
     return chunks
+
 
 
 def _merge_chunks(existing_path: Path, new_chunks: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], int]:

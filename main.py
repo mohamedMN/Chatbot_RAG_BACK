@@ -17,9 +17,11 @@ import logging
 from pathlib import Path
 from contextlib import asynccontextmanager
 from typing import Any, Dict, Callable, Optional, List
-from fastapi.middleware.cors import CORSMiddleware
-from api.runtime_llm import router as llm_router, _start_provider
+import sys
+import time
+from starlette.responses import JSONResponse
 
+from fastapi.exceptions import RequestValidationError
 # Optional .env
 try:
     from dotenv import load_dotenv  # type: ignore
@@ -70,17 +72,42 @@ except Exception:
     except Exception:
         _HAS_PIPELINE = False
 
-# ---------- Logging ----------
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+
+# ---------- Logging: write to log.txt AND keep console output ----------
+LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG").upper()
+LOG_FILE = Path(__file__).parent / "log.txt"
+
+# Configure our root logger with two handlers
+handlers: List[logging.Handler] = [
+    logging.FileHandler(LOG_FILE, mode="a", encoding="utf-8"),
+    logging.StreamHandler()
+]
 logging.basicConfig(
     level=LOG_LEVEL,
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+    handlers=handlers,
 )
+
+logging.captureWarnings(True)
+
+
+def _excepthook(exc_type, exc_value, exc_tb):
+    logging.getLogger("unhandled").error("Uncaught exception",
+                                         exc_info=(exc_type, exc_value, exc_tb))
+
+
+sys.excepthook = _excepthook
+
+# make sure uvicorn loggers are verbose too
+for _name in ("uvicorn", "uvicorn.error", "uvicorn.access"):
+    lg = logging.getLogger(_name)
+    lg.setLevel(LOG_LEVEL)
+    lg.propagate = True  # let them bubble to root (so they hit your handlers)
+
 log = logging.getLogger("chatbot_rag.main")
 
+
 # ---------- ORJSON (pretty/safe) ----------
-
-
 def _orjson_dumps_pretty(v: Any) -> bytes:
     return orjson.dumps(
         v,
@@ -214,9 +241,8 @@ async def _do_warmup_first_request() -> Dict[str, Any]:
 
     return res
 
+
 # ---------- Lifespan ----------
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     prov = (os.getenv("LLM_PROVIDER") or "").lower().strip()
@@ -228,7 +254,6 @@ async def lifespan(app: FastAPI):
             print(f"[startup] Could not start LLM provider '{prov}': {e}")
 
     _ensure_dirs()
-    
     log.info("Data dirs: %s", [str(p) for p in (
         settings.documents_path, settings.output_path, settings.index_path, settings.runtime_path
     )])
@@ -240,6 +265,7 @@ async def lifespan(app: FastAPI):
 
     yield
     log.info("Shutting down app.")
+
 
 app = FastAPI(
     title=APP_NAME,
@@ -259,7 +285,7 @@ origins = [o.strip() for o in origins_env.split(",")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,                         # <= utilise bien 'origins'
+    allow_origins=origins,                         # <= use list 'origins'
     allow_origin_regex=r"^http://(localhost|127\.0\.0\.1):5173$",
     allow_credentials=True,                        # cookies cross-origin
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -271,7 +297,44 @@ app.add_middleware(
     ],
     expose_headers=["set-cookie"],
 )
+
 # ---------- First-request warmup (includes FAISS auto-build if missing) ----------
+
+# --- ultra-verbose request logging middleware ---
+
+
+@app.middleware("http")
+async def _req_logger(request, call_next):
+    t0 = time.perf_counter()
+    log.debug("➡️ %s %s | headers=%s", request.method,
+              request.url.path, dict(request.headers))
+    try:
+        response = await call_next(request)
+        dt = (time.perf_counter() - t0) * 1000
+        log.debug("⬅️ %s %s → %s (%.1f ms)", request.method,
+                  request.url.path, response.status_code, dt)
+        return response
+    except Exception as e:
+        dt = (time.perf_counter() - t0) * 1000
+        log.exception("💥 %s %s crashed after %.1f ms: %s",
+                      request.method, request.url.path, dt, e)
+        raise
+
+# --- exception handlers to log + return JSON ---
+
+
+@app.exception_handler(RequestValidationError)
+async def _validation_handler(request, exc: RequestValidationError):
+    logging.getLogger("fastapi.validation").exception(
+        "Validation error on %s %s", request.method, request.url.path)
+    return JSONResponse(status_code=422, content={"ok": False, "error": "validation_error", "detail": exc.errors()})
+
+
+@app.exception_handler(Exception)
+async def _any_exception_handler(request, exc: Exception):
+    logging.getLogger("fastapi.exception").exception("Unhandled app exception on %s %s",
+                                                     request.method, request.url.path)
+    return JSONResponse(status_code=500, content={"ok": False, "error": "internal_server_error"})
 
 
 @app.middleware("http")

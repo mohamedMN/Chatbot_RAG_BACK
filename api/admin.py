@@ -162,13 +162,17 @@ def admin_stats(request: Request, x_admin_key: Optional[str] = Header(None)) -> 
         "delta_24h": 0.0,
         "documents_total": 0,
         "documents_7d": 0,
+        "uploads_total": 0,          # NEW
+        "uploads_7d": 0,             # NEW
+        "indexed_total": 0,          # NEW
+        "indexed_7d": 0,             # NEW
         "retrieval_topk_avg": None,
         "similarity_avg": None,
         "latency_ms_avg": None,
         "safe_answer_rate": None,
-        "total_messages_24h": 0,             # NEW
-        "unique_customers_24h": 0,           # NEW
-        "avg_session_time_seconds_24h": 0.0  # NEW
+        "total_messages_24h": 0,
+        "unique_customers_24h": 0,
+        "avg_session_time_seconds_24h": 0.0,
     }
 
     supabase = _get_supabase_safe()
@@ -178,26 +182,35 @@ def admin_stats(request: Request, x_admin_key: Optional[str] = Header(None)) -> 
 
     # Toutes les requêtes sont protégées par try/except pour rester "fail-safe"
     try:
-        # --- Conversations (sessions) ---
-        conv_24h = supabase.table("sessions").select(
-            "id").gte("started_at", t24h.isoformat()).execute()
-        conversations_24h = len(conv_24h.data or [])
-        conv_prev = (
-            supabase.table("sessions")
+    # uploads
+        uploads_total = supabase.table("documents").select("id", count="exact").execute()
+        out["uploads_total"] = uploads_total.count or 0
+
+        uploads_7d = (
+            supabase.table("documents")
             .select("id")
-            .gte("started_at", t48h.isoformat())
-            .lt("started_at", t24h.isoformat())
+            .gte("created_at", t7d.isoformat())
             .execute()
         )
-        conversations_prev_24h = len(conv_prev.data or [])
-        if conversations_prev_24h == 0:
-            delta_24h = 100.0 if conversations_24h > 0 else 0.0
-        else:
-            delta_24h = round(
-                ((conversations_24h - conversations_prev_24h) / conversations_prev_24h) * 100.0, 1)
+        out["uploads_7d"] = len(uploads_7d.data or [])
 
-        out["conversations_24h"] = conversations_24h
-        out["delta_24h"] = delta_24h
+        # indexed
+        idx_total = (
+            supabase.table("documents")
+            .select("id", count="exact")
+            .eq("indexed", True)
+            .execute()
+        )
+        out["indexed_total"] = idx_total.count or 0
+
+        idx_7d = (
+            supabase.table("documents")
+            .select("id")
+            .eq("indexed", True)
+            .gte("indexed_at", t7d.isoformat())
+            .execute()
+        )
+        out["indexed_7d"] = len(idx_7d.data or [])
     except Exception:
         pass
 
