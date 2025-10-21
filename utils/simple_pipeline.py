@@ -14,6 +14,17 @@ from fastapi import UploadFile
 
 from config.settings import settings, EMBEDDING_MODEL, EMBEDDING_DIMENSION, FAISS_NORMALIZE_VECTORS
 from utils.workspaces import WorkspacePaths
+_HAS_SMART_CHUNKER = False
+try:
+    # put your file at core/document_chunker.py (class DocumentChunker as you posted)
+    from core.chunker import DocumentChunker
+    _chunker = DocumentChunker()
+    _HAS_SMART_CHUNKER = True
+except Exception:
+    _HAS_SMART_CHUNKER = False
+
+
+
 
 # Try your real modules first; otherwise fallback to simple extractors
 _HAS_LOADER = False
@@ -113,40 +124,98 @@ def _extract_chunks_from_uploads(
     chunks: List[Dict[str, Any]] = []
     ordinal = 0
 
+    # -------- 1) If you have a doc loader, use it --------
     if _HAS_LOADER:
         docs = load_documents([str(f) for f in files])
         for i, d in enumerate(docs):
             content = d.get("content", "") if isinstance(d, dict) else ""
             if not content:
                 continue
-            chunks.append({
-                "id": ordinal,
-                "ordinal": ordinal,
-                "content": content[:MAX_TEXT_CHARS],
-                "source": d.get("source", str(files[min(i, len(files)-1)])),
-                "subject": d.get("subject", ""),
-            })
-            ordinal += 1
-            if max_chunks is not None and len(chunks) >= max_chunks:
-                break
+            source = d.get("source", str(files[min(i, len(files) - 1)]))
+            subject = d.get("subject", Path(source).name)
+            predefined_sections = d.get("predefined_sections", [])
+
+            # Prefer SMART chunker if available
+            if _HAS_SMART_CHUNKER:
+                doc_chunks = _chunker.chunk_document({
+                    "id": i,
+                    "content": content,
+                    "source": source,
+                    "predefined_sections": predefined_sections,
+                })
+                for ch in doc_chunks:
+                    chunks.append({
+                        "id": ordinal,
+                        "ordinal": ordinal,
+                        "content": ch.get("content", ""),
+                        "source": source,
+                        "subject": subject,
+                        # keep the section your chunker computed (nice for UI/ranking)
+                        "section": ch.get("section", "Section Principale"),
+                    })
+                    ordinal += 1
+                    if max_chunks is not None and len(chunks) >= max_chunks:
+                        return chunks
+            else:
+                # If no smart chunker, at least capture full doc (previous behavior)
+                # (or you can keep your 600/60 simple splitter here)
+                piece = content[:MAX_TEXT_CHARS]
+                if piece:
+                    chunks.append({
+                        "id": ordinal,
+                        "ordinal": ordinal,
+                        "content": piece,
+                        "source": source,
+                        "subject": subject,
+                    })
+                    ordinal += 1
+                    if max_chunks is not None and len(chunks) >= max_chunks:
+                        return chunks
         return chunks
 
-    # Fallback splitter
+    # -------- 2) No loader: read file → SMART chunker → fallback splitter --------
     for f in files:
         text = _read_text_fallback(f)
-        for piece in _split_simple(text, max_chars=600, overlap=60):
-            chunks.append({
-                "id": ordinal,
-                "ordinal": ordinal,
-                "content": piece,
-                "source": str(f),
-                "subject": f.name,
+        if not text:
+            continue
+        source = str(f)
+        subject = f.name
+
+        if _HAS_SMART_CHUNKER:
+            doc_chunks = _chunker.chunk_document({
+                "id": 0,
+                "content": text[:MAX_TEXT_CHARS],
+                "source": source,
+                "predefined_sections": [],
             })
-            ordinal += 1
-            if max_chunks is not None and len(chunks) >= max_chunks:
-                return chunks
+            for ch in doc_chunks:
+                chunks.append({
+                    "id": ordinal,
+                    "ordinal": ordinal,
+                    "content": ch.get("content", ""),
+                    "source": source,
+                    "subject": subject,
+                    "section": ch.get("section", "Section Principale"),
+                })
+                ordinal += 1
+                if max_chunks is not None and len(chunks) >= max_chunks:
+                    return chunks
+        else:
+            # last resort: simple fixed-size splitter
+            for piece in _split_simple(text, max_chars=600, overlap=60):
+                chunks.append({
+                    "id": ordinal,
+                    "ordinal": ordinal,
+                    "content": piece,
+                    "source": source,
+                    "subject": subject,
+                })
+                ordinal += 1
+                if max_chunks is not None and len(chunks) >= max_chunks:
+                    return chunks
 
     return chunks
+
 
 
 

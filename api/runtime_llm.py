@@ -1,5 +1,6 @@
 # api/runtime_llm.py
 from __future__ import annotations
+from utils.lmstudio_chat import LMStudioChat   # <-- new
 
 import os
 from typing import Any, Dict, List, Optional
@@ -7,11 +8,14 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from utils.lmstudio_chat import LMStudioChat   # <-- new
 
 # Charge .env (sans override par défaut)
 load_dotenv(override=False)
 
 router = APIRouter(prefix="/llm", tags=["llm"])
+LMSTUDIO_CHAT_MODEL = os.getenv(
+    "LMSTUDIO_CHAT_MODEL", "lmstudio-community/Meta-Llama-3-8B-Instruct")
 
 # -------------------- Imports conditionnels --------------------
 
@@ -52,7 +56,6 @@ STATE = _RuntimeLLMState()
 
 REQUIRED_ENV: Dict[str, List[str]] = {
     "groq": ["GROQ_API_KEY", "GROQ_MODEL"],
-    "ollama": ["OLLAMA_MODEL", "OLLAMA_HOST", "OLLAMA_NUM_CTX"],
 }
 
 
@@ -113,7 +116,8 @@ def _start_provider(provider: str) -> None:
             status_code=400, detail=f"Missing env for {provider}: {missing}")
 
     try:
-        llm = _build_groq_llm() if provider == "groq" else _build_ollama_llm()
+        llm = _build_groq_llm() if provider == "groq" else LMStudioChat(
+            model=os.getenv("LMSTUDIO_MODEL"))
 
         # Sanity check
         test = llm.invoke("Démarrage: répondre 'OK' si prêt.")

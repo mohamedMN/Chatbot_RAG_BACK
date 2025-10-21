@@ -32980,3 +32980,471 @@ AttributeError: 'function' object has no attribute '__wrapped__'
 2025-10-19 21:43:12,024 | DEBUG | chatbot_rag.main | ➡️ POST /api/llm/select | headers={'host': 'localhost:8000', 'connection': 'keep-alive', 'content-length': '21', 'sec-ch-ua-platform': '"Windows"', 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36', 'accept': 'application/json, text/plain, */*', 'sec-ch-ua': '"Brave";v="141", "Not?A_Brand";v="8", "Chromium";v="141"', 'content-type': 'application/json', 'sec-ch-ua-mobile': '?0', 'sec-gpc': '1', 'accept-language': 'fr-FR,fr;q=0.9', 'origin': 'http://localhost:5173', 'sec-fetch-site': 'same-site', 'sec-fetch-mode': 'cors', 'sec-fetch-dest': 'empty', 'referer': 'http://localhost:5173/', 'accept-encoding': 'gzip, deflate, br, zstd'}
 2025-10-19 21:43:12,033 | DEBUG | chatbot_rag.main | ⬅️ POST /api/llm/select → 400 (8.2 ms)
 2025-10-19 21:43:12,041 | INFO | uvicorn.access | 127.0.0.1:32133 - "POST /api/llm/select HTTP/1.1" 400
+2025-10-20 20:41:57,111 | INFO | uvicorn.error | Started server process [1536]
+2025-10-20 20:41:57,113 | INFO | uvicorn.error | Waiting for application startup.
+2025-10-20 20:41:58,157 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 20:41:58,441 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 20:41:58,444 | INFO | chatbot_rag.main | Data dirs: ['C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\raw', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\processed', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\index', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\runtime']
+2025-10-20 20:41:58,446 | INFO | chatbot_rag.main | FAISS index present at C:\Users\lenovo\Desktop\LA_FAC\PFE-orange\ChatBot\backend\data\index\faiss.index.
+2025-10-20 20:41:58,600 | INFO | uvicorn.error | Application startup complete.
+2025-10-20 20:41:58,663 | INFO | chatbot_rag.main | Running first-request warmup (FAISS ensure/build, optional emb+LLM)…
+2025-10-20 20:41:58,681 | INFO | chatbot_rag.main | Warmup result: {'faiss': {'skipped': True, 'reason': 'index already present'}, 'embeddings': {'skipped': True}, 'llm': {'skipped': True}}
+2025-10-20 20:41:58,780 | INFO | uvicorn.access | 127.0.0.1:42056 - "GET /api/auth/me HTTP/1.1" 200
+2025-10-20 20:41:58,791 | INFO | uvicorn.access | 127.0.0.1:42056 - "GET /api/auth/me HTTP/1.1" 200
+2025-10-20 20:41:59,101 | INFO | uvicorn.access | 127.0.0.1:42062 - "GET /api/admin/config HTTP/1.1" 200
+2025-10-20 20:41:59,111 | INFO | uvicorn.access | 127.0.0.1:42062 - "GET /api/admin/config HTTP/1.1" 200
+2025-10-20 20:42:00,110 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id "HTTP/2 200 OK"
+2025-10-20 20:42:00,270 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&created_at=gte.2025-10-13T19%3A41%3A58.929313%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 20:42:00,462 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&indexed=eq.True "HTTP/2 200 OK"
+2025-10-20 20:42:00,650 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&indexed=eq.True&indexed_at=gte.2025-10-13T19%3A41%3A58.929313%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 20:42:00,821 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id "HTTP/2 200 OK"
+2025-10-20 20:42:00,950 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&created_at=gte.2025-10-13T19%3A41%3A58.929313%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 20:42:01,089 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages?select=id&created_at=gte.2025-10-19T19%3A41%3A58.929313%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 20:42:01,217 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/sessions?select=user_id&started_at=gte.2025-10-19T19%3A41%3A58.929313%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 20:42:01,345 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/sessions?select=started_at%2Cended_at&started_at=gte.2025-10-19T19%3A41%3A58.929313%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 20:42:01,488 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=latency_ms&created_at=gte.2025-10-19T19%3A41%3A58.929313%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 20:42:01,600 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=similarity&created_at=gte.2025-10-19T19%3A41%3A58.929313%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 20:42:01,745 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=top_k&created_at=gte.2025-10-19T19%3A41%3A58.929313%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 20:42:01,887 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=safe_answer&created_at=gte.2025-10-19T19%3A41%3A58.929313%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 20:42:01,891 | INFO | uvicorn.access | 127.0.0.1:42056 - "GET /api/admin/stats HTTP/1.1" 200
+2025-10-20 20:42:02,029 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id "HTTP/2 200 OK"
+2025-10-20 20:42:02,192 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&created_at=gte.2025-10-13T19%3A42%3A01.906436%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 20:42:02,339 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&indexed=eq.True "HTTP/2 200 OK"
+2025-10-20 20:42:02,478 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&indexed=eq.True&indexed_at=gte.2025-10-13T19%3A42%3A01.906436%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 20:42:02,626 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id "HTTP/2 200 OK"
+2025-10-20 20:42:02,748 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&created_at=gte.2025-10-13T19%3A42%3A01.906436%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 20:42:02,880 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages?select=id&created_at=gte.2025-10-19T19%3A42%3A01.906436%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 20:42:03,011 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/sessions?select=user_id&started_at=gte.2025-10-19T19%3A42%3A01.906436%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 20:42:03,161 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/sessions?select=started_at%2Cended_at&started_at=gte.2025-10-19T19%3A42%3A01.906436%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 20:42:03,321 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=latency_ms&created_at=gte.2025-10-19T19%3A42%3A01.906436%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 20:42:03,468 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=similarity&created_at=gte.2025-10-19T19%3A42%3A01.906436%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 20:42:03,594 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=top_k&created_at=gte.2025-10-19T19%3A42%3A01.906436%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 20:42:03,728 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=safe_answer&created_at=gte.2025-10-19T19%3A42%3A01.906436%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 20:42:03,730 | INFO | uvicorn.access | 127.0.0.1:42062 - "GET /api/admin/stats HTTP/1.1" 200
+2025-10-20 20:42:31,646 | INFO | uvicorn.access | 127.0.0.1:42070 - "OPTIONS /api/workspaces?session_id=e2f8f7c0-ebf0-479d-8a50-f815df183ea8 HTTP/1.1" 200
+2025-10-20 20:42:31,648 | INFO | uvicorn.access | 127.0.0.1:42071 - "OPTIONS /api/workspaces?session_id=e2f8f7c0-ebf0-479d-8a50-f815df183ea8 HTTP/1.1" 200
+2025-10-20 20:42:31,662 | INFO | uvicorn.access | 127.0.0.1:42072 - "GET /api/llm/status HTTP/1.1" 200
+2025-10-20 20:42:31,685 | INFO | uvicorn.access | 127.0.0.1:42071 - "GET /api/llm/status HTTP/1.1" 200
+2025-10-20 20:42:31,976 | INFO | uvicorn.access | 127.0.0.1:42077 - "POST /api/workspaces?session_id=e2f8f7c0-ebf0-479d-8a50-f815df183ea8 HTTP/1.1" 200
+2025-10-20 20:42:31,994 | INFO | uvicorn.access | 127.0.0.1:42078 - "POST /api/workspaces?session_id=e2f8f7c0-ebf0-479d-8a50-f815df183ea8 HTTP/1.1" 200
+2025-10-20 20:42:35,116 | INFO | uvicorn.access | 127.0.0.1:42101 - "OPTIONS /api/llm/select HTTP/1.1" 200
+2025-10-20 20:42:35,125 | INFO | uvicorn.access | 127.0.0.1:42101 - "POST /api/llm/select HTTP/1.1" 400
+2025-10-20 21:59:33,210 | INFO | uvicorn.error | Shutting down
+2025-10-20 21:59:33,341 | INFO | uvicorn.error | Waiting for application shutdown.
+2025-10-20 21:59:33,362 | INFO | chatbot_rag.main | Shutting down app.
+2025-10-20 21:59:33,377 | INFO | uvicorn.error | Application shutdown complete.
+2025-10-20 21:59:33,379 | INFO | uvicorn.error | Finished server process [1536]
+2025-10-20 22:25:31,770 | INFO | uvicorn.error | Started server process [10532]
+2025-10-20 22:25:31,771 | INFO | uvicorn.error | Waiting for application startup.
+2025-10-20 22:25:32,771 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 22:25:33,075 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 22:25:33,078 | INFO | chatbot_rag.main | Data dirs: ['C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\raw', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\processed', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\index', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\runtime']
+2025-10-20 22:25:33,079 | INFO | chatbot_rag.main | FAISS index present at C:\Users\lenovo\Desktop\LA_FAC\PFE-orange\ChatBot\backend\data\index\faiss.index.
+2025-10-20 22:25:33,273 | INFO | uvicorn.error | Application startup complete.
+2025-10-20 22:35:24,294 | INFO | uvicorn.error | Started server process [10244]
+2025-10-20 22:35:24,295 | INFO | uvicorn.error | Waiting for application startup.
+2025-10-20 22:35:25,474 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 22:35:25,724 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 22:35:25,727 | INFO | chatbot_rag.main | Data dirs: ['C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\raw', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\processed', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\index', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\runtime']
+2025-10-20 22:35:25,727 | INFO | chatbot_rag.main | FAISS index present at C:\Users\lenovo\Desktop\LA_FAC\PFE-orange\ChatBot\backend\data\index\faiss.index.
+2025-10-20 22:35:25,908 | INFO | uvicorn.error | Application startup complete.
+2025-10-20 22:35:57,342 | INFO | chatbot_rag.main | Running first-request warmup (FAISS ensure/build, optional emb+LLM)…
+2025-10-20 22:35:57,345 | INFO | chatbot_rag.main | Warmup result: {'faiss': {'skipped': True, 'reason': 'index already present'}, 'embeddings': {'skipped': True}, 'llm': {'skipped': True}}
+2025-10-20 22:35:57,350 | INFO | uvicorn.access | 127.0.0.1:31968 - "OPTIONS /api/workspaces?session_id=a01f1564-b3ca-43e3-90aa-d85f1efba95f HTTP/1.1" 200
+2025-10-20 22:35:57,364 | INFO | uvicorn.access | 127.0.0.1:31969 - "OPTIONS /api/workspaces?session_id=a01f1564-b3ca-43e3-90aa-d85f1efba95f HTTP/1.1" 200
+2025-10-20 22:35:57,382 | INFO | uvicorn.access | 127.0.0.1:31970 - "GET /api/llm/status HTTP/1.1" 200
+2025-10-20 22:35:57,395 | INFO | uvicorn.access | 127.0.0.1:31970 - "GET /api/llm/status HTTP/1.1" 200
+2025-10-20 22:35:57,687 | INFO | uvicorn.access | 127.0.0.1:31976 - "POST /api/workspaces?session_id=a01f1564-b3ca-43e3-90aa-d85f1efba95f HTTP/1.1" 200
+2025-10-20 22:35:57,689 | INFO | uvicorn.access | 127.0.0.1:31977 - "POST /api/workspaces?session_id=a01f1564-b3ca-43e3-90aa-d85f1efba95f HTTP/1.1" 200
+2025-10-20 22:35:58,608 | INFO | uvicorn.access | 127.0.0.1:31970 - "OPTIONS /api/llm/select HTTP/1.1" 200
+2025-10-20 22:35:58,619 | INFO | uvicorn.access | 127.0.0.1:31970 - "POST /api/llm/select HTTP/1.1" 400
+2025-10-20 22:36:02,714 | INFO | uvicorn.access | 127.0.0.1:31984 - "POST /api/llm/select HTTP/1.1" 400
+2025-10-20 22:38:11,451 | INFO | uvicorn.access | 127.0.0.1:32060 - "POST /api/llm/select HTTP/1.1" 400
+2025-10-20 22:38:12,815 | INFO | uvicorn.access | 127.0.0.1:32060 - "POST /api/llm/select HTTP/1.1" 400
+2025-10-20 22:38:15,981 | INFO | uvicorn.error | Shutting down
+2025-10-20 22:38:16,093 | INFO | uvicorn.error | Waiting for application shutdown.
+2025-10-20 22:38:16,096 | INFO | chatbot_rag.main | Shutting down app.
+2025-10-20 22:38:16,096 | INFO | uvicorn.error | Application shutdown complete.
+2025-10-20 22:38:16,097 | INFO | uvicorn.error | Finished server process [10244]
+2025-10-20 22:38:43,963 | INFO | uvicorn.error | Started server process [9096]
+2025-10-20 22:38:43,965 | INFO | uvicorn.error | Waiting for application startup.
+2025-10-20 22:38:45,418 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 22:38:45,835 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 22:38:45,838 | INFO | chatbot_rag.main | Data dirs: ['C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\raw', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\processed', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\index', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\runtime']
+2025-10-20 22:38:45,840 | INFO | chatbot_rag.main | FAISS index present at C:\Users\lenovo\Desktop\LA_FAC\PFE-orange\ChatBot\backend\data\index\faiss.index.
+2025-10-20 22:38:46,024 | INFO | uvicorn.error | Application startup complete.
+2025-10-20 22:38:50,395 | INFO | chatbot_rag.main | Running first-request warmup (FAISS ensure/build, optional emb+LLM)…
+2025-10-20 22:38:50,397 | INFO | chatbot_rag.main | Warmup result: {'faiss': {'skipped': True, 'reason': 'index already present'}, 'embeddings': {'skipped': True}, 'llm': {'skipped': True}}
+2025-10-20 22:38:50,443 | INFO | uvicorn.access | 127.0.0.1:32089 - "POST /api/llm/select HTTP/1.1" 500
+2025-10-20 22:38:55,935 | INFO | uvicorn.access | 127.0.0.1:32090 - "POST /api/llm/select HTTP/1.1" 500
+2025-10-20 22:38:56,751 | INFO | uvicorn.access | 127.0.0.1:32090 - "POST /api/llm/select HTTP/1.1" 500
+2025-10-20 22:38:57,513 | INFO | uvicorn.access | 127.0.0.1:32093 - "POST /api/llm/select HTTP/1.1" 500
+2025-10-20 23:34:30,375 | INFO | uvicorn.access | 127.0.0.1:21450 - "GET /api/auth/me HTTP/1.1" 401
+2025-10-20 23:34:30,388 | INFO | uvicorn.access | 127.0.0.1:21450 - "GET /api/auth/me HTTP/1.1" 401
+2025-10-20 23:34:30,800 | INFO | uvicorn.access | 127.0.0.1:21456 - "OPTIONS /api/workspaces?session_id=a01f1564-b3ca-43e3-90aa-d85f1efba95f HTTP/1.1" 200
+2025-10-20 23:34:30,808 | INFO | uvicorn.access | 127.0.0.1:21457 - "OPTIONS /api/workspaces?session_id=a01f1564-b3ca-43e3-90aa-d85f1efba95f HTTP/1.1" 200
+2025-10-20 23:34:30,863 | INFO | uvicorn.access | 127.0.0.1:21458 - "GET /api/llm/status HTTP/1.1" 200
+2025-10-20 23:34:30,888 | INFO | uvicorn.access | 127.0.0.1:21451 - "POST /api/workspaces?session_id=a01f1564-b3ca-43e3-90aa-d85f1efba95f HTTP/1.1" 200
+2025-10-20 23:34:30,921 | INFO | uvicorn.access | 127.0.0.1:21450 - "POST /api/workspaces?session_id=a01f1564-b3ca-43e3-90aa-d85f1efba95f HTTP/1.1" 200
+2025-10-20 23:34:30,955 | INFO | uvicorn.access | 127.0.0.1:21458 - "GET /api/llm/status HTTP/1.1" 200
+2025-10-20 23:34:32,600 | INFO | uvicorn.access | 127.0.0.1:21458 - "OPTIONS /api/llm/select HTTP/1.1" 200
+2025-10-20 23:34:32,686 | INFO | uvicorn.access | 127.0.0.1:21458 - "POST /api/llm/select HTTP/1.1" 500
+2025-10-20 23:34:33,557 | INFO | uvicorn.access | 127.0.0.1:21458 - "POST /api/llm/select HTTP/1.1" 500
+2025-10-20 23:34:33,747 | INFO | uvicorn.access | 127.0.0.1:21458 - "POST /api/llm/select HTTP/1.1" 500
+2025-10-20 23:34:33,955 | INFO | uvicorn.access | 127.0.0.1:21458 - "POST /api/llm/select HTTP/1.1" 500
+2025-10-20 23:34:34,114 | INFO | uvicorn.access | 127.0.0.1:21458 - "POST /api/llm/select HTTP/1.1" 500
+2025-10-20 23:34:34,270 | INFO | uvicorn.access | 127.0.0.1:21458 - "POST /api/llm/select HTTP/1.1" 500
+2025-10-20 23:36:26,561 | INFO | uvicorn.error | Shutting down
+2025-10-20 23:36:26,676 | INFO | uvicorn.error | Waiting for application shutdown.
+2025-10-20 23:36:26,714 | INFO | chatbot_rag.main | Shutting down app.
+2025-10-20 23:36:26,734 | INFO | uvicorn.error | Application shutdown complete.
+2025-10-20 23:36:26,763 | INFO | uvicorn.error | Finished server process [9096]
+2025-10-20 23:36:49,658 | INFO | uvicorn.error | Started server process [9428]
+2025-10-20 23:36:49,659 | INFO | uvicorn.error | Waiting for application startup.
+2025-10-20 23:36:50,381 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:36:50,610 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:36:50,614 | INFO | chatbot_rag.main | Data dirs: ['C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\raw', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\processed', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\index', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\runtime']
+2025-10-20 23:36:50,616 | INFO | chatbot_rag.main | FAISS index present at C:\Users\lenovo\Desktop\LA_FAC\PFE-orange\ChatBot\backend\data\index\faiss.index.
+2025-10-20 23:36:50,775 | INFO | uvicorn.error | Application startup complete.
+2025-10-20 23:36:54,678 | INFO | chatbot_rag.main | Running first-request warmup (FAISS ensure/build, optional emb+LLM)…
+2025-10-20 23:36:54,680 | INFO | chatbot_rag.main | Warmup result: {'faiss': {'skipped': True, 'reason': 'index already present'}, 'embeddings': {'skipped': True}, 'llm': {'skipped': True}}
+2025-10-20 23:36:56,860 | INFO | httpx | HTTP Request: POST http://localhost:1234/v1/chat/completions "HTTP/1.1 404 Not Found"
+2025-10-20 23:36:56,863 | INFO | uvicorn.access | 127.0.0.1:21563 - "POST /api/llm/select HTTP/1.1" 500
+2025-10-20 23:38:38,908 | INFO | uvicorn.error | Shutting down
+2025-10-20 23:38:39,018 | INFO | uvicorn.error | Waiting for application shutdown.
+2025-10-20 23:38:39,021 | INFO | chatbot_rag.main | Shutting down app.
+2025-10-20 23:38:39,022 | INFO | uvicorn.error | Application shutdown complete.
+2025-10-20 23:38:39,024 | INFO | uvicorn.error | Finished server process [9428]
+2025-10-20 23:38:57,515 | INFO | uvicorn.error | Started server process [15612]
+2025-10-20 23:38:57,516 | INFO | uvicorn.error | Waiting for application startup.
+2025-10-20 23:38:58,479 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:38:58,790 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:38:58,793 | INFO | chatbot_rag.main | Data dirs: ['C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\raw', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\processed', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\index', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\runtime']
+2025-10-20 23:38:58,794 | INFO | chatbot_rag.main | FAISS index present at C:\Users\lenovo\Desktop\LA_FAC\PFE-orange\ChatBot\backend\data\index\faiss.index.
+2025-10-20 23:38:58,944 | INFO | uvicorn.error | Application startup complete.
+2025-10-20 23:39:08,487 | INFO | uvicorn.error | Shutting down
+2025-10-20 23:39:08,595 | INFO | uvicorn.error | Waiting for application shutdown.
+2025-10-20 23:39:08,597 | INFO | chatbot_rag.main | Shutting down app.
+2025-10-20 23:39:08,598 | INFO | uvicorn.error | Application shutdown complete.
+2025-10-20 23:39:08,601 | INFO | uvicorn.error | Finished server process [15612]
+2025-10-20 23:39:29,182 | INFO | uvicorn.error | Started server process [4220]
+2025-10-20 23:39:29,184 | INFO | uvicorn.error | Waiting for application startup.
+2025-10-20 23:39:29,834 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:39:30,143 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:39:30,146 | INFO | chatbot_rag.main | Data dirs: ['C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\raw', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\processed', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\index', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\runtime']
+2025-10-20 23:39:30,147 | INFO | chatbot_rag.main | FAISS index present at C:\Users\lenovo\Desktop\LA_FAC\PFE-orange\ChatBot\backend\data\index\faiss.index.
+2025-10-20 23:39:30,298 | INFO | uvicorn.error | Application startup complete.
+2025-10-20 23:40:46,665 | INFO | chatbot_rag.main | Running first-request warmup (FAISS ensure/build, optional emb+LLM)…
+2025-10-20 23:40:46,668 | INFO | chatbot_rag.main | Warmup result: {'faiss': {'skipped': True, 'reason': 'index already present'}, 'embeddings': {'skipped': True}, 'llm': {'skipped': True}}
+2025-10-20 23:40:48,768 | INFO | httpx | HTTP Request: POST http://localhost:1234/v1/chat/completions "HTTP/1.1 404 Not Found"
+2025-10-20 23:40:48,785 | INFO | httpx | HTTP Request: POST http://localhost:1234/v1/responses "HTTP/1.1 404 Not Found"
+2025-10-20 23:40:48,795 | INFO | httpx | HTTP Request: POST http://localhost:1234/v1/completions "HTTP/1.1 404 Not Found"
+2025-10-20 23:40:48,798 | INFO | uvicorn.access | 127.0.0.1:21728 - "POST /api/llm/select HTTP/1.1" 500
+2025-10-20 23:42:12,803 | INFO | uvicorn.error | Started server process [16308]
+2025-10-20 23:42:12,826 | INFO | uvicorn.error | Waiting for application startup.
+2025-10-20 23:42:14,475 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:42:14,760 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:42:14,819 | INFO | chatbot_rag.main | Data dirs: ['C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\raw', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\processed', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\index', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\runtime']
+2025-10-20 23:42:14,943 | INFO | chatbot_rag.main | FAISS index present at C:\Users\lenovo\Desktop\LA_FAC\PFE-orange\ChatBot\backend\data\index\faiss.index.
+2025-10-20 23:42:15,524 | INFO | uvicorn.error | Application startup complete.
+2025-10-20 23:42:44,389 | INFO | chatbot_rag.main | Running first-request warmup (FAISS ensure/build, optional emb+LLM)…
+2025-10-20 23:42:44,391 | INFO | chatbot_rag.main | Warmup result: {'faiss': {'skipped': True, 'reason': 'index already present'}, 'embeddings': {'skipped': True}, 'llm': {'skipped': True}}
+2025-10-20 23:42:47,681 | INFO | httpx | HTTP Request: POST http://localhost:1234/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:42:49,964 | INFO | httpx | HTTP Request: POST http://localhost:1234/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:42:49,968 | INFO | uvicorn.access | 127.0.0.1:21870 - "POST /api/llm/select HTTP/1.1" 200
+2025-10-20 23:42:59,353 | INFO | uvicorn.access | 127.0.0.1:21877 - "OPTIONS /api/ask HTTP/1.1" 200
+2025-10-20 23:43:01,196 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages "HTTP/2 409 Conflict"
+2025-10-20 23:43:01,481 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages "HTTP/2 409 Conflict"
+2025-10-20 23:43:01,586 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers "HTTP/2 409 Conflict"
+2025-10-20 23:43:01,592 | INFO | uvicorn.access | 127.0.0.1:21881 - "POST /api/ask HTTP/1.1" 200
+2025-10-20 23:43:26,546 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:43:26,796 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:43:26,806 | INFO | uvicorn.access | 127.0.0.1:21893 - "POST /api/llm/select HTTP/1.1" 200
+2025-10-20 23:43:31,035 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages "HTTP/2 409 Conflict"
+2025-10-20 23:43:31,125 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages "HTTP/2 409 Conflict"
+2025-10-20 23:43:31,225 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers "HTTP/2 409 Conflict"
+2025-10-20 23:43:31,234 | INFO | uvicorn.access | 127.0.0.1:21899 - "POST /api/ask HTTP/1.1" 200
+2025-10-20 23:43:40,905 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages "HTTP/2 409 Conflict"
+2025-10-20 23:43:40,999 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages "HTTP/2 409 Conflict"
+2025-10-20 23:43:41,105 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers "HTTP/2 409 Conflict"
+2025-10-20 23:43:41,108 | INFO | uvicorn.access | 127.0.0.1:21905 - "POST /api/ask HTTP/1.1" 200
+2025-10-20 23:43:49,265 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages "HTTP/2 409 Conflict"
+2025-10-20 23:43:49,356 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages "HTTP/2 409 Conflict"
+2025-10-20 23:43:49,594 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers "HTTP/2 409 Conflict"
+2025-10-20 23:43:49,596 | INFO | uvicorn.access | 127.0.0.1:21929 - "POST /api/ask HTTP/1.1" 200
+2025-10-20 23:44:58,652 | INFO | uvicorn.access | 127.0.0.1:21982 - "OPTIONS /api/auth/login HTTP/1.1" 200
+2025-10-20 23:44:59,363 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/users_local?select=id%2Cemail%2Cpassword_hash%2Crole&email=eq.mohamed%40orange.com&limit=1 "HTTP/2 200 OK"
+2025-10-20 23:44:59,615 | INFO | uvicorn.access | 127.0.0.1:21986 - "POST /api/auth/login HTTP/1.1" 200
+2025-10-20 23:45:00,089 | INFO | uvicorn.access | 127.0.0.1:21993 - "GET /api/admin/config HTTP/1.1" 200
+2025-10-20 23:45:00,097 | INFO | uvicorn.access | 127.0.0.1:21993 - "GET /api/admin/config HTTP/1.1" 200
+2025-10-20 23:45:00,549 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id "HTTP/2 200 OK"
+2025-10-20 23:45:00,753 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&created_at=gte.2025-10-13T22%3A45%3A00.080559%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:00,957 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&indexed=eq.True "HTTP/2 200 OK"
+2025-10-20 23:45:01,163 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&indexed=eq.True&indexed_at=gte.2025-10-13T22%3A45%3A00.080559%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:01,367 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id "HTTP/2 200 OK"
+2025-10-20 23:45:01,557 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&created_at=gte.2025-10-13T22%3A45%3A00.080559%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:01,777 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages?select=id&created_at=gte.2025-10-19T22%3A45%3A00.080559%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:01,983 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/sessions?select=user_id&started_at=gte.2025-10-19T22%3A45%3A00.080559%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:02,071 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/sessions?select=started_at%2Cended_at&started_at=gte.2025-10-19T22%3A45%3A00.080559%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:02,391 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=latency_ms&created_at=gte.2025-10-19T22%3A45%3A00.080559%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:02,603 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=similarity&created_at=gte.2025-10-19T22%3A45%3A00.080559%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:02,802 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=top_k&created_at=gte.2025-10-19T22%3A45%3A00.080559%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:03,005 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=safe_answer&created_at=gte.2025-10-19T22%3A45%3A00.080559%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:03,009 | INFO | uvicorn.access | 127.0.0.1:21992 - "GET /api/admin/stats HTTP/1.1" 200
+2025-10-20 23:45:03,211 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id "HTTP/2 200 OK"
+2025-10-20 23:45:03,415 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&created_at=gte.2025-10-13T22%3A45%3A03.019739%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:03,619 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&indexed=eq.True "HTTP/2 200 OK"
+2025-10-20 23:45:03,824 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&indexed=eq.True&indexed_at=gte.2025-10-13T22%3A45%3A03.019739%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:03,906 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id "HTTP/2 200 OK"
+2025-10-20 23:45:04,029 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&created_at=gte.2025-10-13T22%3A45%3A03.019739%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:04,234 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages?select=id&created_at=gte.2025-10-19T22%3A45%3A03.019739%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:04,439 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/sessions?select=user_id&started_at=gte.2025-10-19T22%3A45%3A03.019739%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:04,646 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/sessions?select=started_at%2Cended_at&started_at=gte.2025-10-19T22%3A45%3A03.019739%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:04,819 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=latency_ms&created_at=gte.2025-10-19T22%3A45%3A03.019739%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:04,919 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=similarity&created_at=gte.2025-10-19T22%3A45%3A03.019739%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:05,029 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=top_k&created_at=gte.2025-10-19T22%3A45%3A03.019739%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:05,265 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=safe_answer&created_at=gte.2025-10-19T22%3A45%3A03.019739%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:05,267 | INFO | uvicorn.access | 127.0.0.1:21993 - "GET /api/admin/stats HTTP/1.1" 200
+2025-10-20 23:45:07,922 | INFO | sentence_transformers.SentenceTransformer | Use pytorch device_name: cpu
+2025-10-20 23:45:07,929 | INFO | sentence_transformers.SentenceTransformer | Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-10-20 23:45:11,614 | INFO | pipeline.rag_pipeline | ============================================================
+2025-10-20 23:45:11,615 | INFO | pipeline.rag_pipeline | DÉMARRAGE DU PIPELINE RAG COMPLET AVEC FAISS
+2025-10-20 23:45:11,616 | INFO | pipeline.rag_pipeline | ============================================================
+2025-10-20 23:45:11,617 | INFO | pipeline.rag_pipeline | Documents: C:\Users\lenovo\Desktop\LA_FAC\PFE-orange\ChatBot\backend\data\raw
+2025-10-20 23:45:11,618 | INFO | pipeline.rag_pipeline | Sortie    : C:\Users\lenovo\Desktop\LA_FAC\PFE-orange\ChatBot\backend\data\processed
+2025-10-20 23:45:11,621 | INFO | pipeline.rag_pipeline | Index     : C:\Users\lenovo\Desktop\LA_FAC\PFE-orange\ChatBot\backend\data\index
+2025-10-20 23:45:12,718 | INFO | pipeline.rag_pipeline |   5 document(s) chargé(s)
+2025-10-20 23:45:12,720 | INFO | pipeline.rag_pipeline |     Document 1/5 : Documentation Technique Complète du Système.docx
+2025-10-20 23:45:12,736 | INFO | pipeline.rag_pipeline |       55 chunks générés
+2025-10-20 23:45:12,737 | INFO | pipeline.rag_pipeline |     Document 2/5 : IBM WebMethods - Architecture Technique de UM et IS.docx
+2025-10-20 23:45:12,753 | INFO | pipeline.rag_pipeline |       63 chunks générés
+2025-10-20 23:45:12,754 | INFO | pipeline.rag_pipeline |     Document 3/5 : lockfile.docx
+2025-10-20 23:45:12,765 | INFO | pipeline.rag_pipeline |       34 chunks générés
+2025-10-20 23:45:12,766 | INFO | pipeline.rag_pipeline |     Document 4/5 : Pipeline d'Intégration et Déploiement.docx
+2025-10-20 23:45:12,774 | INFO | pipeline.rag_pipeline |       59 chunks générés
+2025-10-20 23:45:12,781 | INFO | pipeline.rag_pipeline |     Document 5/5 : WebMethods.docx
+2025-10-20 23:45:12,803 | INFO | pipeline.rag_pipeline |       47 chunks générés
+2025-10-20 23:45:12,805 | INFO | pipeline.rag_pipeline |   Statistiques de chunking :
+2025-10-20 23:45:12,806 | INFO | pipeline.rag_pipeline |     Total chunks : 258
+2025-10-20 23:45:12,806 | INFO | pipeline.rag_pipeline |     Tokens moyens : 45.8
+2025-10-20 23:45:12,814 | INFO | pipeline.rag_pipeline |     Plage : 1-61 tokens
+2025-10-20 23:45:24,931 | INFO | pipeline.rag_pipeline |   Statistiques des embeddings :
+2025-10-20 23:45:24,931 | INFO | pipeline.rag_pipeline |     Total : 63
+2025-10-20 23:45:24,932 | INFO | pipeline.rag_pipeline |     Valides : 63
+2025-10-20 23:45:24,932 | INFO | pipeline.rag_pipeline |     Taux de succès : 100.0%
+2025-10-20 23:45:24,934 | INFO | pipeline.rag_pipeline |   Création de l’index IndexFlatIP…
+2025-10-20 23:45:24,952 | INFO | pipeline.rag_pipeline |   Index créé : 63 vecteurs | type=IndexFlatIP | métrique=ip
+2025-10-20 23:45:24,977 | INFO | pipeline.rag_pipeline |     Chunks sauvegardés : C:\Users\lenovo\Desktop\LA_FAC\PFE-orange\ChatBot\backend\data\processed\chunks.json
+2025-10-20 23:45:25,118 | INFO | pipeline.rag_pipeline |     Embeddings sauvegardés : C:\Users\lenovo\Desktop\LA_FAC\PFE-orange\ChatBot\backend\data\processed\embeddings.json
+2025-10-20 23:45:25,120 | INFO | pipeline.rag_pipeline |     Statistiques sauvegardées : C:\Users\lenovo\Desktop\LA_FAC\PFE-orange\ChatBot\backend\data\processed\pipeline_stats.json
+2025-10-20 23:45:25,121 | INFO | pipeline.rag_pipeline | 
+============================================================
+2025-10-20 23:45:25,125 | INFO | pipeline.rag_pipeline | PIPELINE RAG TERMINÉ
+2025-10-20 23:45:25,127 | INFO | pipeline.rag_pipeline | ============================================================
+2025-10-20 23:45:25,128 | INFO | pipeline.rag_pipeline | RÉSUMÉ :
+2025-10-20 23:45:25,130 | INFO | pipeline.rag_pipeline |   Documents traités : 5
+2025-10-20 23:45:25,131 | INFO | pipeline.rag_pipeline |   Chunks créés      : 258
+2025-10-20 23:45:25,132 | INFO | pipeline.rag_pipeline |   Embeddings générés: 63
+2025-10-20 23:45:25,132 | INFO | pipeline.rag_pipeline |   Index FAISS       : Créé
+2025-10-20 23:45:25,133 | INFO | pipeline.rag_pipeline |   Temps d’exécution : 13.51s
+2025-10-20 23:45:25,134 | INFO | pipeline.rag_pipeline |   Aucune erreur
+2025-10-20 23:45:25,135 | INFO | pipeline.rag_pipeline | Index FAISS : C:\Users\lenovo\Desktop\LA_FAC\PFE-orange\ChatBot\backend\data\index\faiss.index
+2025-10-20 23:45:25,136 | INFO | pipeline.rag_pipeline | ============================================================
+2025-10-20 23:45:25,154 | INFO | uvicorn.access | 127.0.0.1:21993 - "POST /api/admin/reindex HTTP/1.1" 200
+2025-10-20 23:45:25,508 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id "HTTP/2 200 OK"
+2025-10-20 23:45:25,673 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&created_at=gte.2025-10-13T22%3A45%3A25.181787%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:25,777 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&indexed=eq.True "HTTP/2 200 OK"
+2025-10-20 23:45:26,074 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&indexed=eq.True&indexed_at=gte.2025-10-13T22%3A45%3A25.181787%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:26,175 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id "HTTP/2 200 OK"
+2025-10-20 23:45:26,276 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&created_at=gte.2025-10-13T22%3A45%3A25.181787%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:26,374 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages?select=id&created_at=gte.2025-10-19T22%3A45%3A25.181787%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:26,469 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/sessions?select=user_id&started_at=gte.2025-10-19T22%3A45%3A25.181787%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:26,632 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/sessions?select=started_at%2Cended_at&started_at=gte.2025-10-19T22%3A45%3A25.181787%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:27,033 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=latency_ms&created_at=gte.2025-10-19T22%3A45%3A25.181787%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:27,156 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=similarity&created_at=gte.2025-10-19T22%3A45%3A25.181787%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:27,268 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=top_k&created_at=gte.2025-10-19T22%3A45%3A25.181787%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:27,433 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=safe_answer&created_at=gte.2025-10-19T22%3A45%3A25.181787%2B00%3A00 "HTTP/2 200 OK"
+2025-10-20 23:45:27,454 | INFO | uvicorn.access | 127.0.0.1:21993 - "GET /api/admin/stats HTTP/1.1" 200
+2025-10-20 23:45:30,301 | INFO | uvicorn.access | 127.0.0.1:22006 - "OPTIONS /api/workspaces?session_id=a01f1564-b3ca-43e3-90aa-d85f1efba95f HTTP/1.1" 200
+2025-10-20 23:45:30,314 | INFO | uvicorn.access | 127.0.0.1:22007 - "OPTIONS /api/workspaces?session_id=a01f1564-b3ca-43e3-90aa-d85f1efba95f HTTP/1.1" 200
+2025-10-20 23:45:30,318 | INFO | uvicorn.access | 127.0.0.1:22006 - "GET /api/llm/status HTTP/1.1" 200
+2025-10-20 23:45:30,334 | INFO | uvicorn.access | 127.0.0.1:22007 - "GET /api/llm/status HTTP/1.1" 200
+2025-10-20 23:45:30,628 | INFO | uvicorn.access | 127.0.0.1:22014 - "POST /api/workspaces?session_id=a01f1564-b3ca-43e3-90aa-d85f1efba95f HTTP/1.1" 200
+2025-10-20 23:45:30,637 | INFO | uvicorn.access | 127.0.0.1:22015 - "POST /api/workspaces?session_id=a01f1564-b3ca-43e3-90aa-d85f1efba95f HTTP/1.1" 200
+2025-10-20 23:45:35,766 | INFO | uvicorn.access | 127.0.0.1:22037 - "OPTIONS /api/ask/workspace HTTP/1.1" 200
+2025-10-20 23:45:36,090 | INFO | uvicorn.access | 127.0.0.1:22041 - "POST /api/ask/workspace HTTP/1.1" 409
+2025-10-20 23:45:43,355 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages "HTTP/2 409 Conflict"
+2025-10-20 23:45:44,945 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:45:46,015 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:45:46,222 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages "HTTP/2 409 Conflict"
+2025-10-20 23:45:46,385 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers "HTTP/2 409 Conflict"
+2025-10-20 23:45:46,396 | INFO | uvicorn.access | 127.0.0.1:22045 - "POST /api/ask HTTP/1.1" 200
+2025-10-20 23:45:51,508 | INFO | uvicorn.access | 127.0.0.1:22069 - "OPTIONS /api/llm/select HTTP/1.1" 200
+2025-10-20 23:45:54,576 | INFO | httpx | HTTP Request: POST http://localhost:1234/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:45:57,362 | INFO | httpx | HTTP Request: POST http://localhost:1234/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:45:57,366 | INFO | uvicorn.access | 127.0.0.1:22069 - "POST /api/llm/select HTTP/1.1" 200
+2025-10-20 23:46:01,762 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages "HTTP/2 409 Conflict"
+2025-10-20 23:46:56,827 | INFO | httpx | HTTP Request: POST http://localhost:1234/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:46:57,189 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages "HTTP/2 409 Conflict"
+2025-10-20 23:46:57,304 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers "HTTP/2 409 Conflict"
+2025-10-20 23:46:57,307 | INFO | uvicorn.access | 127.0.0.1:22075 - "POST /api/ask HTTP/1.1" 200
+2025-10-20 23:47:16,200 | INFO | uvicorn.access | 127.0.0.1:22104 - "POST /api/workspaces?session_id=a01f1564-b3ca-43e3-90aa-d85f1efba95f HTTP/1.1" 200
+2025-10-20 23:47:25,051 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents "HTTP/2 201 Created"
+2025-10-20 23:47:25,053 | ERROR | api.workspaces | auto-build failed for a01f1564-b3ca-43e3-90aa-d85f1efba95f: 'function' object has no attribute '__wrapped__'
+Traceback (most recent call last):
+  File "C:\Users\lenovo\Desktop\LA_FAC\PFE-orange\ChatBot\backend\api\workspaces.py", line 195, in upload_docs
+    build_result = build_ws.__wrapped__(
+                   ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'function' object has no attribute '__wrapped__'
+2025-10-20 23:47:25,109 | INFO | uvicorn.access | 127.0.0.1:22109 - "POST /api/workspaces/a01f1564-b3ca-43e3-90aa-d85f1efba95f/documents?auto_build=true HTTP/1.1" 200
+2025-10-20 23:47:27,568 | INFO | sentence_transformers.SentenceTransformer | Use pytorch device_name: cpu
+2025-10-20 23:47:27,569 | INFO | sentence_transformers.SentenceTransformer | Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-10-20 23:47:32,572 | INFO | uvicorn.access | 127.0.0.1:22109 - "POST /api/workspaces/a01f1564-b3ca-43e3-90aa-d85f1efba95f/build?force=true HTTP/1.1" 200
+2025-10-20 23:47:38,624 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages "HTTP/2 409 Conflict"
+2025-10-20 23:47:38,629 | INFO | sentence_transformers.SentenceTransformer | Use pytorch device_name: cpu
+2025-10-20 23:47:38,629 | INFO | sentence_transformers.SentenceTransformer | Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-10-20 23:49:46,272 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages "HTTP/2 409 Conflict"
+2025-10-20 23:49:46,447 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers "HTTP/2 409 Conflict"
+2025-10-20 23:49:46,457 | INFO | uvicorn.access | 127.0.0.1:22114 - "POST /api/ask/workspace HTTP/1.1" 200
+2025-10-20 23:51:06,882 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:51:07,208 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:51:07,212 | INFO | uvicorn.access | 127.0.0.1:22221 - "POST /api/llm/select HTTP/1.1" 200
+2025-10-20 23:51:17,308 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages "HTTP/2 409 Conflict"
+2025-10-20 23:51:17,312 | INFO | sentence_transformers.SentenceTransformer | Use pytorch device_name: cpu
+2025-10-20 23:51:17,312 | INFO | sentence_transformers.SentenceTransformer | Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-10-20 23:51:22,449 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:51:23,174 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:51:25,474 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages "HTTP/2 409 Conflict"
+2025-10-20 23:51:25,639 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers "HTTP/2 409 Conflict"
+2025-10-20 23:51:25,642 | INFO | uvicorn.access | 127.0.0.1:22226 - "POST /api/ask/workspace HTTP/1.1" 200
+2025-10-20 23:55:04,698 | INFO | uvicorn.error | Shutting down
+2025-10-20 23:55:04,809 | INFO | uvicorn.error | Waiting for application shutdown.
+2025-10-20 23:55:04,817 | INFO | chatbot_rag.main | Shutting down app.
+2025-10-20 23:55:04,819 | INFO | uvicorn.error | Application shutdown complete.
+2025-10-20 23:55:04,822 | INFO | uvicorn.error | Finished server process [16308]
+2025-10-20 23:55:32,706 | INFO | uvicorn.error | Started server process [8484]
+2025-10-20 23:55:32,709 | INFO | uvicorn.error | Waiting for application startup.
+2025-10-20 23:55:33,861 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:55:34,197 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:55:34,205 | INFO | chatbot_rag.main | Data dirs: ['C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\raw', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\processed', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\index', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\runtime']
+2025-10-20 23:55:34,222 | INFO | chatbot_rag.main | FAISS index present at C:\Users\lenovo\Desktop\LA_FAC\PFE-orange\ChatBot\backend\data\index\faiss.index.
+2025-10-20 23:55:34,472 | INFO | uvicorn.error | Application startup complete.
+2025-10-20 23:55:34,602 | ERROR | uvicorn.error | Traceback (most recent call last):
+  File "C:\Users\lenovo\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py", line 653, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+asyncio.exceptions.CancelledError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\lenovo\Desktop\LA_FAC\PFE-orange\ChatBot\backend\.venv\Lib\site-packages\uvicorn\_compat.py", line 23, in asyncio_run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Local\Programs\Python\Python311\Lib\asyncio\runners.py", line 123, in run
+    raise KeyboardInterrupt()
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\lenovo\Desktop\LA_FAC\PFE-orange\ChatBot\backend\.venv\Lib\site-packages\starlette\routing.py", line 701, in lifespan
+    await receive()
+  File "C:\Users\lenovo\Desktop\LA_FAC\PFE-orange\ChatBot\backend\.venv\Lib\site-packages\uvicorn\lifespan\on.py", line 137, in receive
+    return await self.receive_queue.get()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lenovo\AppData\Local\Programs\Python\Python311\Lib\asyncio\queues.py", line 158, in get
+    await getter
+asyncio.exceptions.CancelledError
+
+2025-10-20 23:55:54,379 | INFO | uvicorn.error | Started server process [2436]
+2025-10-20 23:55:54,379 | INFO | uvicorn.error | Waiting for application startup.
+2025-10-20 23:55:55,091 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:55:55,417 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:55:55,421 | INFO | chatbot_rag.main | Data dirs: ['C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\raw', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\processed', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\index', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\runtime']
+2025-10-20 23:55:55,429 | INFO | chatbot_rag.main | FAISS index present at C:\Users\lenovo\Desktop\LA_FAC\PFE-orange\ChatBot\backend\data\index\faiss.index.
+2025-10-20 23:55:55,841 | INFO | uvicorn.error | Application startup complete.
+2025-10-20 23:56:00,244 | INFO | uvicorn.error | Shutting down
+2025-10-20 23:56:00,353 | INFO | uvicorn.error | Waiting for application shutdown.
+2025-10-20 23:56:00,355 | INFO | chatbot_rag.main | Shutting down app.
+2025-10-20 23:56:00,356 | INFO | uvicorn.error | Application shutdown complete.
+2025-10-20 23:56:00,357 | INFO | uvicorn.error | Finished server process [2436]
+2025-10-20 23:56:21,460 | INFO | uvicorn.error | Started server process [14808]
+2025-10-20 23:56:21,461 | INFO | uvicorn.error | Waiting for application startup.
+2025-10-20 23:56:22,169 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:56:22,608 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:56:22,616 | INFO | chatbot_rag.main | Data dirs: ['C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\raw', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\processed', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\index', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\runtime']
+2025-10-20 23:56:22,666 | INFO | chatbot_rag.main | FAISS index present at C:\Users\lenovo\Desktop\LA_FAC\PFE-orange\ChatBot\backend\data\index\faiss.index.
+2025-10-20 23:56:23,000 | INFO | uvicorn.error | Application startup complete.
+2025-10-20 23:56:56,650 | INFO | chatbot_rag.main | Running first-request warmup (FAISS ensure/build, optional emb+LLM)…
+2025-10-20 23:56:56,652 | INFO | chatbot_rag.main | Warmup result: {'faiss': {'skipped': True, 'reason': 'index already present'}, 'embeddings': {'skipped': True}, 'llm': {'skipped': True}}
+2025-10-20 23:56:56,680 | INFO | sentence_transformers.SentenceTransformer | Use pytorch device_name: cpu
+2025-10-20 23:56:56,681 | INFO | sentence_transformers.SentenceTransformer | Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-10-20 23:57:02,660 | INFO | uvicorn.access | 127.0.0.1:22444 - "POST /api/workspaces/a01f1564-b3ca-43e3-90aa-d85f1efba95f/build?force=true HTTP/1.1" 200
+2025-10-20 23:57:10,737 | INFO | uvicorn.access | 127.0.0.1:22451 - "OPTIONS /api/ask/workspace HTTP/1.1" 200
+2025-10-20 23:57:11,895 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages "HTTP/2 409 Conflict"
+2025-10-20 23:57:11,901 | INFO | sentence_transformers.SentenceTransformer | Use pytorch device_name: cpu
+2025-10-20 23:57:11,901 | INFO | sentence_transformers.SentenceTransformer | Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-10-20 23:57:18,303 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:57:19,263 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:57:19,546 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages "HTTP/2 409 Conflict"
+2025-10-20 23:57:19,664 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers "HTTP/2 409 Conflict"
+2025-10-20 23:57:19,673 | INFO | uvicorn.access | 127.0.0.1:22455 - "POST /api/ask/workspace HTTP/1.1" 200
+2025-10-20 23:57:28,736 | INFO | uvicorn.access | 127.0.0.1:22480 - "OPTIONS /api/llm/select HTTP/1.1" 200
+2025-10-20 23:57:32,283 | INFO | httpx | HTTP Request: POST http://localhost:1234/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:57:35,221 | INFO | httpx | HTTP Request: POST http://localhost:1234/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-20 23:57:35,223 | INFO | uvicorn.access | 127.0.0.1:22480 - "POST /api/llm/select HTTP/1.1" 200
+2025-10-20 23:57:40,238 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages "HTTP/2 409 Conflict"
+2025-10-20 23:57:40,244 | INFO | sentence_transformers.SentenceTransformer | Use pytorch device_name: cpu
+2025-10-20 23:57:40,250 | INFO | sentence_transformers.SentenceTransformer | Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-10-20 23:59:48,853 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages "HTTP/2 409 Conflict"
+2025-10-20 23:59:48,942 | INFO | httpx | HTTP Request: POST https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers "HTTP/2 409 Conflict"
+2025-10-20 23:59:48,949 | INFO | uvicorn.access | 127.0.0.1:22486 - "POST /api/ask/workspace HTTP/1.1" 200
+2025-10-21 21:23:49,962 | INFO | uvicorn.error | Started server process [21360]
+2025-10-21 21:23:49,963 | INFO | uvicorn.error | Waiting for application startup.
+2025-10-21 21:23:50,833 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-21 21:23:51,096 | INFO | httpx | HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-10-21 21:23:51,098 | INFO | chatbot_rag.main | Data dirs: ['C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\raw', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\processed', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\index', 'C:\\Users\\lenovo\\Desktop\\LA_FAC\\PFE-orange\\ChatBot\\backend\\data\\runtime']
+2025-10-21 21:23:51,100 | INFO | chatbot_rag.main | FAISS index present at C:\Users\lenovo\Desktop\LA_FAC\PFE-orange\ChatBot\backend\data\index\faiss.index.
+2025-10-21 21:23:51,256 | INFO | uvicorn.error | Application startup complete.
+2025-10-21 21:24:14,986 | INFO | chatbot_rag.main | Running first-request warmup (FAISS ensure/build, optional emb+LLM)…
+2025-10-21 21:24:14,987 | INFO | chatbot_rag.main | Warmup result: {'faiss': {'skipped': True, 'reason': 'index already present'}, 'embeddings': {'skipped': True}, 'llm': {'skipped': True}}
+2025-10-21 21:24:14,991 | INFO | uvicorn.access | 127.0.0.1:37497 - "OPTIONS /api/auth/login HTTP/1.1" 200
+2025-10-21 21:24:16,591 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/users_local?select=id%2Cemail%2Cpassword_hash%2Crole&email=eq.mohamed%40orange.com&limit=1 "HTTP/2 200 OK"
+2025-10-21 21:24:16,811 | INFO | uvicorn.access | 127.0.0.1:37501 - "POST /api/auth/login HTTP/1.1" 200
+2025-10-21 21:24:16,942 | INFO | uvicorn.access | 127.0.0.1:37503 - "GET /api/admin/config HTTP/1.1" 200
+2025-10-21 21:24:16,950 | INFO | uvicorn.access | 127.0.0.1:37503 - "GET /api/admin/config HTTP/1.1" 200
+2025-10-21 21:24:17,101 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id "HTTP/2 200 OK"
+2025-10-21 21:24:17,470 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&created_at=gte.2025-10-14T20%3A24%3A16.936605%2B00%3A00 "HTTP/2 200 OK"
+2025-10-21 21:24:17,592 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&indexed=eq.True "HTTP/2 200 OK"
+2025-10-21 21:24:17,707 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&indexed=eq.True&indexed_at=gte.2025-10-14T20%3A24%3A16.936605%2B00%3A00 "HTTP/2 200 OK"
+2025-10-21 21:24:17,832 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id "HTTP/2 200 OK"
+2025-10-21 21:24:17,973 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&created_at=gte.2025-10-14T20%3A24%3A16.936605%2B00%3A00 "HTTP/2 200 OK"
+2025-10-21 21:24:18,100 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages?select=id&created_at=gte.2025-10-20T20%3A24%3A16.936605%2B00%3A00 "HTTP/2 200 OK"
+2025-10-21 21:24:18,295 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/sessions?select=user_id&started_at=gte.2025-10-20T20%3A24%3A16.936605%2B00%3A00 "HTTP/2 200 OK"
+2025-10-21 21:24:18,528 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/sessions?select=started_at%2Cended_at&started_at=gte.2025-10-20T20%3A24%3A16.936605%2B00%3A00 "HTTP/2 200 OK"
+2025-10-21 21:24:18,684 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=latency_ms&created_at=gte.2025-10-20T20%3A24%3A16.936605%2B00%3A00 "HTTP/2 200 OK"
+2025-10-21 21:24:18,821 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=similarity&created_at=gte.2025-10-20T20%3A24%3A16.936605%2B00%3A00 "HTTP/2 200 OK"
+2025-10-21 21:24:18,969 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=top_k&created_at=gte.2025-10-20T20%3A24%3A16.936605%2B00%3A00 "HTTP/2 200 OK"
+2025-10-21 21:24:19,066 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=safe_answer&created_at=gte.2025-10-20T20%3A24%3A16.936605%2B00%3A00 "HTTP/2 200 OK"
+2025-10-21 21:24:19,070 | INFO | uvicorn.access | 127.0.0.1:37501 - "GET /api/admin/stats HTTP/1.1" 200
+2025-10-21 21:24:19,285 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id "HTTP/2 200 OK"
+2025-10-21 21:24:19,398 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&created_at=gte.2025-10-14T20%3A24%3A19.083725%2B00%3A00 "HTTP/2 200 OK"
+2025-10-21 21:24:19,539 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&indexed=eq.True "HTTP/2 200 OK"
+2025-10-21 21:24:19,683 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&indexed=eq.True&indexed_at=gte.2025-10-14T20%3A24%3A19.083725%2B00%3A00 "HTTP/2 200 OK"
+2025-10-21 21:24:19,824 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id "HTTP/2 200 OK"
+2025-10-21 21:24:19,942 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/documents?select=id&created_at=gte.2025-10-14T20%3A24%3A19.083725%2B00%3A00 "HTTP/2 200 OK"
+2025-10-21 21:24:20,073 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/messages?select=id&created_at=gte.2025-10-20T20%3A24%3A19.083725%2B00%3A00 "HTTP/2 200 OK"
+2025-10-21 21:24:20,178 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/sessions?select=user_id&started_at=gte.2025-10-20T20%3A24%3A19.083725%2B00%3A00 "HTTP/2 200 OK"
+2025-10-21 21:24:20,285 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/sessions?select=started_at%2Cended_at&started_at=gte.2025-10-20T20%3A24%3A19.083725%2B00%3A00 "HTTP/2 200 OK"
+2025-10-21 21:24:20,403 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=latency_ms&created_at=gte.2025-10-20T20%3A24%3A19.083725%2B00%3A00 "HTTP/2 200 OK"
+2025-10-21 21:24:20,540 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=similarity&created_at=gte.2025-10-20T20%3A24%3A19.083725%2B00%3A00 "HTTP/2 200 OK"
+2025-10-21 21:24:20,675 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=top_k&created_at=gte.2025-10-20T20%3A24%3A19.083725%2B00%3A00 "HTTP/2 200 OK"
+2025-10-21 21:24:20,801 | INFO | httpx | HTTP Request: GET https://guxpjrwgborfbxkgrnrk.supabase.co/rest/v1/answers?select=safe_answer&created_at=gte.2025-10-20T20%3A24%3A19.083725%2B00%3A00 "HTTP/2 200 OK"
+2025-10-21 21:24:20,805 | INFO | uvicorn.access | 127.0.0.1:37501 - "GET /api/admin/stats HTTP/1.1" 200
+2025-10-21 22:05:49,197 | INFO | uvicorn.error | Shutting down
+2025-10-21 22:05:49,358 | INFO | uvicorn.error | Finished server process [21360]
+2025-10-21 22:05:49,528 | INFO | uvicorn.error | ASGI 'lifespan' protocol appears unsupported.
