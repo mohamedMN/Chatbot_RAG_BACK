@@ -49,6 +49,9 @@ class RAGPipelineWithFAISS:
         self.chunker = DocumentChunker()
         self.embedder = ChunkEmbedder()
         self.faiss_indexer = FAISSIndexer()
+        self._last_chunks_path = None
+        self._last_embeddings_path = None
+        self._last_stats_path = None
 
         # Statistiques du pipeline (agrégées pour un résumé final)
         self.stats: Dict[str, Any] = {
@@ -91,7 +94,7 @@ class RAGPipelineWithFAISS:
         log.info("=" * 60)
         log.info("Documents: %s", docs_path)
         log.info("Sortie    : %s", out_path)
-        log.info("Index     : %s", settings.index_path)
+        log.info("Index     : %s", settings.faiss_index_path)
 
         try:
             # 0) Index déjà présent ?
@@ -191,6 +194,17 @@ class RAGPipelineWithFAISS:
             all_chunks.extend(chunks)
             log.info("      %d chunks générés", len(chunks))
 
+        # DIAGNOSTIC : vérifier les chunks problématiques
+        empty_chunks = [c for c in all_chunks if not (
+            c.get("content") or "").strip()]
+        if empty_chunks:
+            log.warning(
+                f"⚠️  {len(empty_chunks)} chunks avec contenu vide détectés!")
+
+        duplicate_ids = len(all_chunks) - len(set(c.get("id") for c in all_chunks))
+        if duplicate_ids > 0:
+            log.warning(f"⚠️  {duplicate_ids} IDs de chunks dupliqués!")
+
         stats = self.chunker.get_chunking_stats(all_chunks)
         self.stats["chunks_created"] = stats.get("total_chunks", 0)
 
@@ -207,15 +221,31 @@ class RAGPipelineWithFAISS:
         embeddings = self.embedder.create_embeddings(chunks)
         self.stats["embeddings_generated"] = len(embeddings)
 
+        # Vérification de base (count)
+        if len(embeddings) != len(chunks):
+            raise RuntimeError(
+                f"Embeddings count {len(embeddings)} != chunks {len(chunks)}")
+
+        # Utiliser la validation intégrée du ChunkEmbedder
         validation = self.embedder.validate_embeddings(embeddings)
+
+        if not validation.get("valid"):
+            issues = validation.get("issues", [])
+            raise RuntimeError(
+                f"Validation embeddings échouée: {validation.get('valid_count')}/{len(embeddings)} valides. "
+                f"Premiers problèmes: {issues[:3]}")
+
         log.info("  Statistiques des embeddings :")
         log.info("    Total : %d", len(embeddings))
+        log.info("    Dimension : %d", validation.get("embedding_dimension", 0))
         log.info("    Valides : %s", validation.get("valid_count"))
         log.info("    Taux de succès : %.1f%%", 100.0 *
-                 validation.get("success_rate", 0.0))
+                validation.get("success_rate", 0.0))
+
         if validation.get("issues"):
-            log.warning("    Problèmes détectés : %d",
-                        len(validation["issues"]))
+            log.warning("    Problèmes détectés : %d", len(validation["issues"]))
+            for issue in validation["issues"][:3]:
+                log.warning("      - %s", issue)
 
         return embeddings
 
@@ -257,6 +287,10 @@ class RAGPipelineWithFAISS:
         save_json(self.stats, stats_path)
         log.info("    Statistiques sauvegardées : %s", stats_path)
 
+        self._last_chunks_path = str(chunks_path)
+        self._last_embeddings_path = str(embeddings_path)
+        self._last_stats_path = str(stats_path)
+
     def _print_summary(self) -> None:
         """Affiche un récapitulatif du pipeline."""
         log.info("\n" + "=" * 60)
@@ -285,8 +319,9 @@ class RAGPipelineWithFAISS:
             "faiss_index_path": str(settings.faiss_index_path),
             "idmap_path": str(settings.idmap_path),
             "metadata_path": str(settings.metadata_path),
-            "chunks_path": str(settings.chunks_path),
-            "embeddings_path": str(settings.embeddings_path),
+            # report the real files we just wrote:
+            "chunks_path": self._last_chunks_path or str(settings.chunks_path),
+            "embeddings_path": self._last_embeddings_path or str(settings.embeddings_path),
             "stats": self.stats,
         }
 

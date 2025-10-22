@@ -96,6 +96,7 @@ class RAGEngine:
         self.llm = llm
         self.retriever = RAGRetriever(faiss_indexer)
         self.generator = RAGGenerator(llm)
+        self.simple_mode = bool(settings.get_retrieval_config().get("simple_mode", False))
 
         # rolling stats
         self.session_stats: Dict[str, Any] = {
@@ -139,8 +140,9 @@ class RAGEngine:
             if not q_raw:
                 return {"success": False, "error": "Empty question", "question": question}
 
-            definitional = is_definitional(q_raw)
-            q_normed = expand_aliases(q_raw)
+            definitional = False if self.simple_mode else is_definitional(
+                q_raw)
+            q_normed = q_raw if self.simple_mode else expand_aliases(q_raw)
 
             # Better defaults for definitional questions
             tk = max(6, int(top_k or 6)) if definitional else int(top_k or 4)
@@ -173,7 +175,9 @@ class RAGEngine:
                     hybrid_hits = dense_hits
 
             # 3) re-rank to surface overview/definition chunks
-            hits = rerank_hits_for_overview(hybrid_hits)
+            hits = hybrid_hits if self.simple_mode else rerank_hits_for_overview(
+                hybrid_hits)
+
 
             # 4) generation
             t2 = time.time()

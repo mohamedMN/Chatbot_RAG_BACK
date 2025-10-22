@@ -8,6 +8,11 @@ from pathlib import Path
 from typing import Dict
 
 from config.settings import settings
+from utils.logger import get_logger
+log = get_logger(__name__)
+
+
+
 
 WS_ROOT = Path(settings.runtime_path) / "workspaces"
 WS_ROOT.mkdir(parents=True, exist_ok=True)
@@ -88,29 +93,49 @@ def delete_workspace(ws_id: str) -> None:
         shutil.rmtree(p.root, ignore_errors=True)
 
 
+# utils/workspaces.py
+
 def load_runtime_from_workspace(ws_id: str) -> Dict[str, any]:
-    import faiss  # type: ignore
+    import faiss
+    import logging
+    log = logging.getLogger(__name__)
 
     p = ensure_workspace(ws_id)
     if not p.faiss_index.exists():
         raise FileNotFoundError("Workspace FAISS index missing")
 
+    # ✅ Charger index
     index = faiss.read_index(str(p.faiss_index))
+    ntotal = getattr(index, 'ntotal', 0)
+    dim = getattr(index, 'd', 0)
+    log.info(f"Index chargé: {ntotal} vecteurs, dim={dim}")
 
+    # ✅ Charger idmap
     if p.idmap.exists():
         idmap = json.loads(p.idmap.read_text(encoding="utf-8"))
+        log.info(f"Idmap chargé: {len(idmap.get('ids', []))} entrées")
     else:
+        log.warning("Idmap manquant, synthèse depuis chunks")
         idmap = _synthesize_idmap_from_chunks(p)
 
+    # ✅ Charger metadata
     meta = {}
     if p.metadata.exists():
         try:
             meta = json.loads(p.metadata.read_text(encoding="utf-8"))
         except Exception:
             meta = {}
+
+    # ✅ Normalisation idmap
     for k in ("ids", "ordinal", "content", "subject", "source"):
         idmap.setdefault(k, [])
     meta.setdefault("metric", "ip")
+
+    # ✅ Vérification cohérence
+    if ntotal != len(idmap['ids']):
+        log.warning(
+            f"⚠️  Incohérence: index={ntotal} vs idmap={len(idmap['ids'])}")
+
     return {"index": index, "idmap": idmap, "meta": meta}
 
 

@@ -1,18 +1,18 @@
 # rag/retriever_groq.py
 from __future__ import annotations
-import time
+
 import re
+import time
 import logging
 from typing import Dict, List, Any, Optional
 import numpy as np
 
-from config.settings import settings
-from core.embedder_selector import get_embedder
 from indexing.faiss_indexer import FAISSIndexer
+from core.embedder_selector import get_embedder  # même embedder que pour Ollama
 
 log = logging.getLogger("rag.retriever.groq")
 
-# ----------------- small local helpers -----------------
+# ----------------- helpers locaux -----------------
 
 
 def _norm(x: np.ndarray) -> np.ndarray:
@@ -21,7 +21,6 @@ def _norm(x: np.ndarray) -> np.ndarray:
 
 
 def _extract_keywords(text: str) -> List[str]:
-    import re
     toks = re.findall(r"[0-9A-Za-zÀ-ÖØ-öø-ÿ_]+", (text or "").lower())
     stop = {"et", "ou", "les", "des", "pour", "avec", "dans", "de", "du", "la", "le",
             "un", "une", "en", "sur", "a", "au", "aux", "the", "and", "of", "to", "in"}
@@ -58,14 +57,24 @@ def _dedup(hits: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         seen.add(key)
         out.append(h)
     return out
-# -------------------------------------------------------
+# --------------------------------------------------
 
 
 class RAGGroqRetriever:
     def __init__(self, faiss_indexer: Optional[FAISSIndexer] = None):
-        self.faiss = faiss_indexer or FAISSIndexer()  # default to global if not provided
+        self.faiss = faiss_indexer or FAISSIndexer()   # index global par défaut
         self.embedder = get_embedder()
         self.runtime: Optional[Dict[str, Any]] = None
+
+        # defaults utilisés par retrieve/_llm_rerank
+        self.top_k_default = 5
+        self.min_score_default = 0.30
+        self.normalize = True
+        self.enable_llm_rerank = True
+        self.llm_rerank_k = 10
+        self.chunk_chars = 800
+
+        # pondérations
         self.w_sim = 0.7
         self.w_kw = 0.3
         self.min_sim = 0.25
@@ -120,7 +129,8 @@ class RAGGroqRetriever:
         out = []
         for i, h in enumerate(hits[:cut]):
             llm_s = scores.get(i, 0)
-            comb = 0.65*float(h.get("final_score", 0.0)) + 0.35*(llm_s/4.0)
+            comb = 0.65 * float(h.get("final_score", 0.0)
+                                ) + 0.35 * (llm_s / 4.0)
             hh = dict(h)
             hh["llm_score"] = llm_s
             hh["final_score"] = float(comb)
@@ -129,10 +139,9 @@ class RAGGroqRetriever:
         out.sort(key=lambda x: (-x["final_score"], x["ordinal"]))
         return out
 
-    def retrieve(
-        self, query: str, top_k: Optional[int] = None, min_score: Optional[float] = None
-    ) -> List[Dict[str, Any]]:
-        if not (self.runtime_data or self.load_runtime()):
+    def retrieve(self, query: str, top_k: Optional[int] = None, min_score: Optional[float] = None) -> List[Dict[str, Any]]:
+        # runtime
+        if not self.runtime and not self.load_runtime():
             return []
 
         k_user = int(top_k) if top_k is not None else self.top_k_default
@@ -140,13 +149,21 @@ class RAGGroqRetriever:
         thr = float(
             min_score) if min_score is not None else self.min_score_default
 
-        rd = self.runtime_data
+        rd = self.runtime
         index, idmap, meta = rd["index"], rd["idmap"], rd.get("meta", {})
         use_ip = str(meta.get("metric", "")).lower() == "ip"
 
         t0 = time.perf_counter()
-        qv = np.asarray(self.embedding_model.embed([query])[
-                        0], dtype="float32").reshape(1, -1)
+        q_vec = self.embedder.embed([query])[0]
+        qv = np.asarray(q_vec, dtype="float32").reshape(1, -1)
+
+        faiss_d = getattr(index, "d", None)
+        if faiss_d is not None and int(qv.shape[1]) != int(faiss_d):
+            raise ValueError(
+                f"Embedding dimension mismatch: query={int(qv.shape[1])} vs index={faiss_d}. "
+                "Rebuild the FAISS index with the current embedding model."
+            )
+
         if use_ip and self.normalize:
             qv = _norm(qv)
 
@@ -163,13 +180,14 @@ class RAGGroqRetriever:
             pos = pos_by_id.get(int(fid))
             if pos is None:
                 continue
+
             subject = str(idmap["subject"][pos])
             content = str(idmap["content"][pos])
             src = str(idmap["source"][pos])
             ord_ = int(idmap["ordinal"][pos])
 
             kw_s = _kw_overlap(kws, f"{subject}\n{content}")
-            final = 0.75 * float(s) + 0.25 * kw_s
+            final = self.w_sim * float(s) + self.w_kw * kw_s
             if final < thr:
                 continue
 
@@ -188,7 +206,7 @@ class RAGGroqRetriever:
         cands.sort(key=lambda h: (-h["final_score"], h["ordinal"]))
 
         # optional Groq re-rank
-        reranked = self._llm_rerank(query, cands[: max(k_user*2, 10)])
+        reranked = self._llm_rerank(query, cands[: max(k_user * 2, 10)])
         out = reranked[:k_user]
         log.debug("Groq retrieve: k=%d -> %d (%.1f ms)", k_user,
                   len(out), (time.perf_counter()-t0)*1000)

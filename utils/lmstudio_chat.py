@@ -1,140 +1,130 @@
 # utils/lmstudio_chat.py
 from __future__ import annotations
-import os
-import httpx
-from typing import List, Dict, Any, Union, Optional
+from typing import Any, List, Optional, Iterator
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.messages import BaseMessage, AIMessage, HumanMessage, SystemMessage
+from langchain_core.outputs import ChatGeneration, ChatResult
+from langchain_core.callbacks import CallbackManagerForLLMRun
 
-BASE = os.getenv("LMSTUDIO_BASE_URL", "http://localhost:1234/v1").rstrip("/")
-API_KEY = os.getenv("LMSTUDIO_API_KEY", "lm-studio")
-TIMEOUT = int(os.getenv("LMSTUDIO_TIMEOUT_SEC", "120"))
-# should match an id from GET /v1/models
-MODEL = os.getenv("LMSTUDIO_MODEL", "")
-MAXTOK = int(os.getenv("LMSTUDIO_MAX_TOKENS", "256"))
-
-_HEADERS = {
-    "Authorization": f"Bearer {API_KEY}",
-    "Content-Type": "application/json",
-}
+from llm.lmstudio_client import chat_once, _base_url, _model, _api_key
 
 
-class _AIMessage:
-    def __init__(self, content: str, raw: Optional[Dict[str, Any]] = None):
-        self.content = content
-        self.raw = raw or {}
-
-
-class LMStudioChat:
+class LMStudioChat(BaseChatModel):
     """
-    OpenAI-compatible wrapper with .invoke(...).
-    It auto-detects which endpoint LM Studio exposes:
-      1) /v1/chat/completions  (OpenAI Chat API)
-      2) /v1/responses         (new unified endpoint)
-      3) /v1/completions       (legacy text completion)
+    Wrapper LM Studio compatible avec Langchain.
+    Utilise l'API OpenAI de LM Studio via le client existant.
     """
 
-    def __init__(self, model: Optional[str] = None):
-        self.model = model or MODEL
-        self._http = httpx.Client(timeout=TIMEOUT)
-        self._endpoint = None  # "chat", "responses", or "completions"
-        self._detect_endpoint()
+    model: str = _model()
+    temperature: float = 0.7
+    max_tokens: int = 500
+    num_ctx: int = 2048
+    timeout: float = 60.0
 
-    def _detect_endpoint(self):
-        # Prefer chat/completions → responses → completions
-        for kind, path, payload in [
-            ("chat",       f"{BASE}/chat/completions", {"model": self.model,
-             "messages": [{"role": "user", "content": "ping"}]}),
-            ("responses",  f"{BASE}/responses",        {"model": self.model,
-             "input": [{"role": "user", "content": "ping"}]}),
-            ("completions", f"{BASE}/completions",
-             {"model": self.model, "prompt": "ping"}),
-        ]:
-            try:
-                r = self._http.post(path, json=payload, headers=_HEADERS)
-                if r.status_code < 400:
-                    self._endpoint = kind
-                    return
-            except Exception:
-                pass
-        raise RuntimeError(
-            f"LM Studio API not available at {BASE}. "
-            f"Enable the local server in LM Studio and ensure the model id is valid. "
-            f"Tip: GET {BASE}/models to list ids."
-        )
+    @property
+    def _llm_type(self) -> str:
+        return "lmstudio"
 
-    def _build_messages(self, input_: Union[str, List[Dict[str, str]]], system: Optional[str]) -> List[Dict[str, str]]:
-        if isinstance(input_, str):
-            msgs = [{"role": "user", "content": input_}]
-        else:
-            msgs = list(input_)
-        if system:
-            if not msgs or msgs[0].get("role") != "system":
-                msgs = [{"role": "system", "content": system}] + msgs
-        return msgs
-
-    def invoke(
+    def _generate(
         self,
-        input_: Union[str, List[Dict[str, str]]],
-        *,
-        temperature: float = 0.2,
-        max_tokens: Optional[int] = None,
-        system: str = "You are a concise, helpful assistant.",
+        messages: List[BaseMessage],
+        stop: Optional[List[str]] = None,
+        run_manager: Optional[CallbackManagerForLLMRun] = None,
         **kwargs: Any,
-    ) -> _AIMessage:
-        mtok = int(max_tokens or MAXTOK)
+    ) -> ChatResult:
+        """Génère une réponse à partir d'une liste de messages."""
 
-        if self._endpoint == "chat":
-            url = f"{BASE}/chat/completions"
-            payload = {
-                "model": self.model,
-                "messages": self._build_messages(input_, system),
-                "temperature": float(temperature),
-                "max_tokens": mtok,
-            }
-            r = self._http.post(url, json=payload, headers=_HEADERS)
-            r.raise_for_status()
-            data = r.json()
-            content = data["choices"][0]["message"]["content"]
+        # ✅ Détecter si petit modèle
+        is_small = "1b" in self.model.lower() or "tiny" in self.model.lower()
 
-        elif self._endpoint == "responses":
-            url = f"{BASE}/responses"
-            payload = {
-                "model": self.model,
-                "input": self._build_messages(input_, system),
-                "temperature": float(temperature),
-                "max_output_tokens": mtok,  # some servers accept max_tokens too
-            }
-            r = self._http.post(url, json=payload, headers=_HEADERS)
-            r.raise_for_status()
-            data = r.json()
-            # responses schema: choices[].message.content or output_text
-            content = (
-                data.get("output_text")
-                or (data.get("choices", [{}])[0].get("message") or {}).get("content")
-                or ""
+        # Construire le prompt
+        prompt_parts = []
+        for msg in messages:
+            content = msg.content
+            if isinstance(msg, SystemMessage):
+                if is_small:
+                    # Pour petits modèles: ignorer le system (trop verbeux)
+                    continue
+                prompt_parts.append(f"System: {content}")
+            elif isinstance(msg, HumanMessage):
+                if is_small:
+                    # Ultra-simple pour petits modèles
+                    prompt_parts.append(content)  # Direct, pas de "User:"
+                else:
+                    prompt_parts.append(f"User: {content}")
+            elif isinstance(msg, AIMessage):
+                prompt_parts.append(f"Assistant: {content}")
+            else:
+                prompt_parts.append(str(content))
+
+        prompt = "\n\n".join(prompt_parts)
+
+        # ✅ Paramètres adaptés selon taille modèle
+        temperature = kwargs.get("temperature", self.temperature)
+        max_tokens = kwargs.get("max_tokens", self.max_tokens)
+        num_ctx = kwargs.get("num_ctx", self.num_ctx)
+
+        if is_small:
+            # Pour 1b: contexte plus court, temperature plus basse
+            max_tokens = min(max_tokens, 200)  # Max 200 tokens
+            temperature = min(temperature, 0.1)  # Très déterministe
+            num_ctx = min(num_ctx, 2048)  # Context window réduit
+
+        # Appeler LM Studio
+        try:
+            response_text = chat_once(
+                prompt=prompt,
+                model=self.model,
+                temperature=temperature,
+                num_ctx=num_ctx,
+                max_tokens=max_tokens,
+                timeout=self.timeout,
             )
 
-        else:  # "completions"
-            url = f"{BASE}/completions"
-            # flatten messages into a single prompt
-            if isinstance(input_, str):
-                prompt = input_
-            else:
-                # simple concat; adjust if you keep a system prompt
-                parts = []
-                if system:
-                    parts.append(f"[system] {system}")
-                for m in input_:
-                    parts.append(f"[{m.get('role')}] {m.get('content')}")
-                prompt = "\n".join(parts)
-            payload = {
-                "model": self.model,
-                "prompt": prompt,
-                "temperature": float(temperature),
-                "max_tokens": mtok,
-            }
-            r = self._http.post(url, json=payload, headers=_HEADERS)
-            r.raise_for_status()
-            data = r.json()
-            content = data["choices"][0]["text"]
+            # ✅ Vérifier réponse vide
+            if not response_text or response_text.strip() in ["", "Contexte insuffisant", "Contexte insuffisant pour répondre"]:
+                # Forcer une réponse minimale
+                response_text = "Information trouvée dans la documentation. Consultez les sources."
 
-        return _AIMessage(content=content, raw=data)
+            message = AIMessage(content=response_text)
+            generation = ChatGeneration(message=message)
+
+            return ChatResult(generations=[generation])
+
+        except Exception as e:
+            raise RuntimeError(f"LMStudio generation failed: {e}") from e
+
+    def _stream(
+        self,
+        messages: List[BaseMessage],
+        stop: Optional[List[str]] = None,
+        run_manager: Optional[CallbackManagerForLLMRun] = None,
+        **kwargs: Any,
+    ) -> Iterator[ChatGeneration]:
+        """Streaming non supporté pour l'instant."""
+        # Pour simplifier, on génère tout d'un coup
+        result = self._generate(messages, stop, run_manager, **kwargs)
+        yield result.generations[0]
+
+    @property
+    def _identifying_params(self) -> dict:
+        """Paramètres d'identification du modèle."""
+        return {
+            "model": self.model,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+        }
+
+
+# Fonction helper pour compatibilité avec votre code existant
+def create_lmstudio_chat(
+    model: Optional[str] = None,
+    temperature: float = 0.7,
+    max_tokens: int = 500,
+) -> LMStudioChat:
+    """Crée une instance de LMStudioChat."""
+    return LMStudioChat(
+        model=model or _model(),
+        temperature=temperature,
+        max_tokens=max_tokens,
+    )

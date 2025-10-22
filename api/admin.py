@@ -11,6 +11,7 @@ from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel
 from pipeline.rag_pipeline import run_rag_pipeline_with_faiss
+from .database import get_supabase
 
 from fastapi import APIRouter, Header, HTTPException, Request , Query
 

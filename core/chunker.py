@@ -1,300 +1,268 @@
-"""
-Module de chunking (découpage) des documents
-"""
+# core/chunker.py
+from __future__ import annotations
 import math
-from typing import List, Dict, Any, Set
-from config.settings import TARGET_TOKENS, MAX_TOKENS, MIN_TOKENS, TOKENS_PER_WORD
-from core.section_detector import SectionDetector
-from utils.text_utils import (
-    normalize_text,
-    split_into_sentences,
-    estimate_tokens,
-    create_text_hash,
-    find_text_overlap
-)
+import hashlib
+import re
+from typing import List, Dict, Any, Set, Tuple
+
+# ---- Config fallbacks (use your real settings if present) ----
+try:
+    from config.settings import TARGET_TOKENS, MAX_TOKENS, MIN_TOKENS, TOKENS_PER_WORD
+except Exception:
+    TOKENS_PER_WORD = 0.75      # rough heuristic
+    TARGET_TOKENS = 48          # ~64 words
+    MIN_TOKENS = 16
+    MAX_TOKENS = 64
+
+# ---- Optional SectionDetector (use yours if present) ----
+try:
+    from core.section_detector import SectionDetector
+except Exception:
+    class SectionDetector:
+        def detect_sections(self, text: str, source: str, predefined_sections: List[Dict[str, Any]] = None):
+            return [{"title": "Section Principale", "start": 0, "end": len(text)}]
+
+        def identify_section(self, position: int, sections: List[Dict[str, Any]]) -> str:
+            for s in sections:
+                if s["start"] <= position <= s["end"]:
+                    return s["title"]
+            return "Section Principale"
+
+# ---- Minimal text utils (use yours if present) ----
+
+
+def _normalize_text(s: str) -> str:
+    s = (s or "").replace("\r\n", "\n").replace("\r", "\n")
+    # collapse excessive spaces
+    s = re.sub(r"[ \t]+", " ", s)
+    # collapse 3+ blank lines
+    s = re.sub(r"\n{3,}", "\n\n", s)
+    return s.strip()
+
+
+_SENT_SPLIT = re.compile(r"(?<=[.!?…])\s+(?=[A-ZÀ-ÖØ-Þ0-9])")
+
+
+def _split_into_sentences(text: str) -> List[str]:
+    text = (text or "").strip()
+    if not text:
+        return []
+    # preserve newlines as sentence boundaries too
+    lines = [ln.strip() for ln in text.split("\n")]
+    out: List[str] = []
+    for line in lines:
+        if not line:
+            continue
+        parts = _SENT_SPLIT.split(line) or [line]
+        out.extend([p.strip() for p in parts if p.strip()])
+    return out
+
+
+def _estimate_tokens(s: str) -> int:
+    if not s:
+        return 0
+    # simple heuristic instead of a tokenizer
+    words = len(s.split())
+    return max(1, int(words * TOKENS_PER_WORD))
+
+
+def _create_text_hash(s: str) -> str:
+    return hashlib.sha1((s or "").strip().encode("utf-8")).hexdigest()
+
+
+def _find_text_overlap(a: str, b: str, min_len: int = 12) -> str:
+    """
+    Return prefix of b that overlaps suffix of a (simple O(n) scan).
+    """
+    a, b = a or "", b or ""
+    max_overlap = min(len(a), len(b))
+    best = ""
+    for k in range(max_overlap, min_len - 1, -1):
+        if a.endswith(b[:k]):
+            best = b[:k]
+            break
+    return best
+
+# ----------------------------------------------------------------
 
 
 class DocumentChunker:
-    """Classe pour découper les documents en chunks sans duplication"""
+    """
+    Deterministic chunker with GLOBAL unique IDs across all documents.
+    """
 
     def __init__(self):
         self.section_detector = SectionDetector()
+        self._global_chunk_counter = 0  # ← Compteur global
 
     def chunk_document(self, doc: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
-        Découpe un document en chunks de taille optimale
-        
-        Args:
-            doc: Document avec id, content, source et predefined_sections
-            
-        Returns:
-            Liste des chunks générés
+        Input doc must contain at least: {'content': str, 'source': str}
+        Optional: 'predefined_sections': List[{'title','start','end'}]
         """
-        # Nettoie le texte du document
-        text = normalize_text(doc['content'])
-        source = doc['source']
+        text = _normalize_text(doc.get("content", ""))
+        source = doc.get("source", "")
 
-        # Détecte les sections
-        predefined_sections = doc.get('predefined_sections', [])
-        sections = self.section_detector.detect_sections(
-            text, source, predefined_sections)
+        predefined_sections = doc.get("predefined_sections", []) or []
+        if predefined_sections:
+            sections = self.section_detector.detect_sections(
+                text, source, predefined_sections)
+        else:
+            sections = self.section_detector.detect_sections(text, source)
 
-        # Crée les chunks
-        chunks = self._create_small_chunks(text, source, sections)
+        chunks = self._create_chunks(text, source, sections)
+        chunks = self._remove_duplicates_and_trim_overlaps(chunks)
 
-        # Vérifie et supprime les duplications
-        clean_chunks = self._remove_duplicates(chunks)
-
-        return clean_chunks
-
-    def _create_small_chunks(self, text: str, source: str, sections: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """
-        Crée des petits chunks (40-60 tokens) sans duplication
-        
-        Args:
-            text: Texte à découper
-            source: Source du document
-            sections: Sections du document
-            
-        Returns:
-            Liste des chunks
-        """
-        # Divise le texte en phrases
-        sentences = split_into_sentences(text)
-
-        chunks = []
-        current_chunk_sentences = []
-        current_token_count = 0
-        used_sentences = set()
-
-        for sentence in sentences:
-            # Ignore les phrases vides
-            if not sentence.strip():
-                continue
-
-            # Évite les phrases déjà utilisées
-            sentence_hash = create_text_hash(sentence)
-            if sentence_hash in used_sentences:
-                continue
-
-            sentence_tokens = estimate_tokens(sentence)
-
-            # Gère les phrases trop longues
-            if sentence_tokens > MAX_TOKENS:
-                # Finalise le chunk current s'il n'est pas vide
-                if current_chunk_sentences:
-                    self._finalize_chunk(current_chunk_sentences, current_token_count,
-                                         text, source, sections, chunks, used_sentences)
-                    current_chunk_sentences = []
-                    current_token_count = 0
-
-                # Divise la phrase longue
-                self._split_long_sentence(
-                    sentence, text, source, sections, chunks, used_sentences)
-                continue
-
-            # Vérifie si ajouter cette phrase dépasse la limite
-            if current_token_count > 0 and current_token_count + sentence_tokens > MAX_TOKENS:
-                # Finalise le chunk current
-                self._finalize_chunk(current_chunk_sentences, current_token_count,
-                                     text, source, sections, chunks, used_sentences)
-
-                # Commence un nouveau chunk avec cette phrase
-                current_chunk_sentences = [sentence]
-                current_token_count = sentence_tokens
-            else:
-                # Ajoute la phrase au chunk current
-                current_chunk_sentences.append(sentence)
-                current_token_count += sentence_tokens
-
-                # Finalise le chunk si on atteint la taille cible
-                if current_token_count >= TARGET_TOKENS:
-                    self._finalize_chunk(current_chunk_sentences, current_token_count,
-                                         text, source, sections, chunks, used_sentences)
-                    current_chunk_sentences = []
-                    current_token_count = 0
-
-        # Finalise le dernier chunk s'il reste des phrases
-        if current_chunk_sentences:
-            self._finalize_chunk(current_chunk_sentences, current_token_count,
-                                 text, source, sections, chunks, used_sentences)
-
-        # Assigne des IDs uniques
-        for i, chunk in enumerate(chunks):
-            chunk['id'] = i + 1
+        # Assign GLOBAL sequential IDs (incremental across all documents)
+        for ch in chunks:
+            self._global_chunk_counter += 1
+            ch["id"] = self._global_chunk_counter  # ← ID global unique
+            # strip debug tokens if present
+            if "tokens" in ch:
+                del ch["tokens"]
 
         return chunks
 
-    def _split_long_sentence(self, sentence: str, text: str, source: str,
-                             sections: List[Dict[str, Any]], chunks: List[Dict[str, Any]],
-                             used_sentences: Set[str]) -> None:
-        """
-        Divise une phrase trop longue en morceaux plus petits
-        
-        Args:
-            sentence: Phrase à diviser
-            text: Texte complet (pour identifier les sections)
-            source: Source du document
-            sections: Sections du document
-            chunks: Liste des chunks (modifiée)
-            used_sentences: Phrases déjà utilisées (modifiée)
-        """
-        words = sentence.split()
-        target_word_count = math.floor(TARGET_TOKENS / TOKENS_PER_WORD)
+    # ------------ internals ------------
 
-        for i in range(0, len(words), target_word_count):
-            sub_words = words[i:min(i + target_word_count, len(words))]
-            if sub_words:
-                sub_text = ' '.join(sub_words)
-                sub_tokens = estimate_tokens(sub_text)
+    def _create_chunks(self, text: str, source: str, sections: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        sentences = _split_into_sentences(text)
+        chunks: List[Dict[str, Any]] = []
+        cur_sents: List[str] = []
+        cur_tokens = 0
+        used_hashes: Set[str] = set()
 
-                # Ajoute seulement si assez de tokens ou dernier morceau
-                if sub_tokens >= MIN_TOKENS or i + target_word_count >= len(words):
-                    # Trouve la position pour identifier la section
-                    pos = text.find(sub_text)
-                    if pos == -1:
-                        pos = 0
-
-                    section = self.section_detector.identify_section(
-                        pos, sections)
-
-                    chunks.append({
-                        'content': sub_text,
-                        'source': source,
-                        'section': section,
-                        'tokens': sub_tokens
-                    })
-
-        # Marque la phrase entière comme utilisée
-        used_sentences.add(create_text_hash(sentence))
-
-    def _finalize_chunk(self, sentences: List[str], token_count: int, text: str,
-                        source: str, sections: List[Dict[str, Any]],
-                        chunks: List[Dict[str, Any]], used_sentences: Set[str]) -> None:
-        """
-        Finalise un chunk et l'ajoute à la liste
-        
-        Args:
-            sentences: Phrases du chunk
-            token_count: Nombre de tokens
-            text: Texte complet
-            source: Source du document
-            sections: Sections du document
-            chunks: Liste des chunks (modifiée)
-            used_sentences: Phrases utilisées (modifiée)
-        """
-        if not sentences:
-            return
-
-        chunk_text = ' '.join(sentences)
-
-        # Trouve la position pour identifier la section
-        pos = text.find(sentences[0])
-        if pos == -1:
-            pos = 0
-
-        section = self.section_detector.identify_section(pos, sections)
-
-        chunks.append({
-            'content': chunk_text,
-            'source': source,
-            'section': section,
-            'tokens': token_count
-        })
-
-        # Marque les phrases comme utilisées
-        for sentence in sentences:
-            used_sentences.add(create_text_hash(sentence))
-
-    def _remove_duplicates(self, chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """
-        Supprime les duplications entre chunks
-        
-        Args:
-            chunks: Liste des chunks à nettoyer
-            
-        Returns:
-            Liste des chunks sans duplication
-        """
-        # Supprime d'abord les chunks complètement identiques
-        unique_chunks = {}
-
-        for chunk in chunks:
-            content = chunk.get('content', '').strip()
-
-            if not content:
+        for sent in sentences:
+            if not sent.strip():
+                continue
+            sh = _create_text_hash(sent)
+            if sh in used_hashes:
                 continue
 
-            content_hash = create_text_hash(content)
+            t = _estimate_tokens(sent)
 
-            if content_hash not in unique_chunks:
-                unique_chunks[content_hash] = chunk
+            # split extra-long sentences
+            if t > MAX_TOKENS:
+                if cur_sents:
+                    self._finalize_chunk(
+                        cur_sents, cur_tokens, text, source, sections, chunks, used_hashes)
+                    cur_sents, cur_tokens = [], 0
+                self._split_long_sentence(
+                    sent, text, source, sections, chunks, used_hashes)
+                continue
 
-        clean_chunks = list(unique_chunks.values())
+            # would overflow window?
+            if cur_tokens > 0 and cur_tokens + t > MAX_TOKENS:
+                self._finalize_chunk(
+                    cur_sents, cur_tokens, text, source, sections, chunks, used_hashes)
+                cur_sents, cur_tokens = [sent], t
+            else:
+                cur_sents.append(sent)
+                cur_tokens += t
+                if cur_tokens >= TARGET_TOKENS:
+                    self._finalize_chunk(
+                        cur_sents, cur_tokens, text, source, sections, chunks, used_hashes)
+                    cur_sents, cur_tokens = [], 0
 
-        # Supprime les chevauchements partiels entre chunks adjacents
-        result = []
-        clean_chunks.sort(key=lambda x: x.get('id', 0))
+        if cur_sents:
+            self._finalize_chunk(cur_sents, cur_tokens,
+                                 text, source, sections, chunks, used_hashes)
 
-        for i in range(len(clean_chunks)):
-            current = clean_chunks[i]
-            current_content = current.get('content', '')
+        return chunks
 
-            # Vérifie le chevauchement avec le chunk précédent
-            if i > 0:
-                previous = clean_chunks[i-1]
-                previous_content = previous.get('content', '')
+    def _split_long_sentence(
+        self, sentence: str, text: str, source: str,
+        sections: List[Dict[str, Any]], chunks: List[Dict[str, Any]],
+        used_hashes: Set[str]
+    ) -> None:
+        words = sentence.split()
+        target_words = max(4, math.floor(
+            TARGET_TOKENS / max(1e-6, TOKENS_PER_WORD)))
+        for i in range(0, len(words), target_words):
+            sub = " ".join(words[i:i+target_words]).strip()
+            if not sub:
+                continue
+            tk = _estimate_tokens(sub)
+            # keep last piece even if tiny to preserve content
+            if tk >= MIN_TOKENS or (i + target_words) >= len(words):
+                pos = text.find(sub)
+                if pos < 0:
+                    pos = 0
+                section = self.section_detector.identify_section(pos, sections)
+                chunks.append({
+                    "content": sub,
+                    "source": source,
+                    "section": section,
+                    "tokens": tk
+                })
+        used_hashes.add(_create_text_hash(sentence))
 
-                # Trouve le chevauchement
-                overlap_text = find_text_overlap(
-                    previous_content, current_content)
+    def _finalize_chunk(
+        self, sentences: List[str], token_count: int, text: str,
+        source: str, sections: List[Dict[str, Any]],
+        chunks: List[Dict[str, Any]], used_hashes: Set[str]
+    ) -> None:
+        if not sentences:
+            return
+        chunk_text = " ".join(sentences).strip()
+        if not chunk_text:
+            return
+        pos = text.find(sentences[0])
+        if pos < 0:
+            pos = 0
+        section = self.section_detector.identify_section(pos, sections)
+        chunks.append({
+            "content": chunk_text,
+            "source": source,
+            "section": section,
+            "tokens": int(token_count)
+        })
+        for s in sentences:
+            used_hashes.add(_create_text_hash(s))
 
-                # Supprime le chevauchement significatif
-                if overlap_text and len(overlap_text) > 10:
-                    current_content = current_content[len(
-                        overlap_text):].strip()
-                    current['content'] = current_content
-                    current['tokens'] = estimate_tokens(current_content)
+    def _remove_duplicates_and_trim_overlaps(self, chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        print(f"DEBUG: Chunks avant déduplication: {len(chunks)}")
 
-            # Ajoute le chunk s'il n'est pas vide
-            if current_content.strip():
-                result.append(current)
+        # remove exact duplicates
+        unique: Dict[str, Dict[str, Any]] = {}
+        for ch in chunks:
+            content = (ch.get("content") or "").strip()
+            if not content:
+                continue
+            h = _create_text_hash(content)
+            if h not in unique:
+                unique[h] = dict(ch)
+        clean = list(unique.values())
 
-        # Réassigne des IDs séquentiels
-        for i, chunk in enumerate(result):
-            chunk['id'] = i + 1
-            # Supprime les informations de debug
-            if 'tokens' in chunk:
-                del chunk['tokens']
+        # trim overlaps between adjacent chunks
+        result: List[Dict[str, Any]] = []
+        for i, cur in enumerate(clean):
+            cur_txt = (cur.get("content") or "").strip()
+            if not cur_txt:
+                continue
+            if result:
+                prev_txt = result[-1]["content"]
+                ov = _find_text_overlap(prev_txt, cur_txt, min_len=12)
+                if ov:
+                    cur_txt = cur_txt[len(ov):].strip()
+                    cur["content"] = cur_txt
+                    cur["tokens"] = _estimate_tokens(cur_txt)
+            if cur_txt:
+                result.append(cur)
 
+        print(f"DEBUG: Chunks après déduplication: {len(result)}")
         return result
 
+    # Optional stats API
     def get_chunking_stats(self, chunks: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """
-        Calcule les statistiques du chunking
-        
-        Args:
-            chunks: Liste des chunks
-            
-        Returns:
-            Statistiques du chunking
-        """
         if not chunks:
-            return {
-                'total_chunks': 0,
-                'avg_tokens': 0,
-                'min_tokens': 0,
-                'max_tokens': 0,
-                'target_range': f"{MIN_TOKENS}-{MAX_TOKENS}"
-            }
-
-        tokens = [estimate_tokens(chunk.get('content', ''))
-                  for chunk in chunks]
-
+            return {"total_chunks": 0, "avg_tokens": 0, "min_tokens": 0, "max_tokens": 0,
+                    "target_range": f"{MIN_TOKENS}-{MAX_TOKENS}"}
+        toks = [_estimate_tokens(ch.get("content", "")) for ch in chunks]
         return {
-            'total_chunks': len(chunks),
-            'avg_tokens': sum(tokens) / len(tokens),
-            'min_tokens': min(tokens),
-            'max_tokens': max(tokens),
-            'target_range': f"{MIN_TOKENS}-{MAX_TOKENS}"
+            "total_chunks": len(chunks),
+            "avg_tokens": sum(toks) / len(toks),
+            "min_tokens": min(toks),
+            "max_tokens": max(toks),
+            "target_range": f"{MIN_TOKENS}-{MAX_TOKENS}",
         }

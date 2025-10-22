@@ -30,111 +30,95 @@ class FAISSIndexer:
             raise ImportError(
                 "FAISS requis pour l'indexing. Installez: pip install faiss-cpu")
 
-    def create_index(self, embeddings_dict: Dict[str, Dict[str, Any]],
-                     index_type: str = "IndexFlatIP") -> None:
-        """
-        Crée un nouvel index FAISS
-        
-        Args:
-            embeddings_dict: Dictionnaire des embeddings avec métadonnées
-            index_type: Type d'index FAISS (IndexFlatIP, IndexIVFFlat, etc.)
-        """
+    def create_index(self, embeddings_dict: Dict[str, Dict[str, Any]], index_type: str = "IndexFlatIP") -> None:
         if not embeddings_dict:
             raise ValueError("Aucun embedding fourni pour créer l'index")
 
         print(f"Création de l'index FAISS {index_type}...")
 
-        # Prépare les données
-        embeddings_matrix, idmap_data = self._prepare_data(embeddings_dict)
+        X, idmap_data = self._prepare_data(embeddings_dict)
+        if X.ndim != 2 or X.shape[1] != self.dimension:
+            raise ValueError(
+                f"Dimension embedding inattendue: got {X.shape}, expected (*,{self.dimension})")
 
-        # Crée l'index FAISS selon le type
+        n = X.shape[0]
+        faiss_cfg = settings.get_faiss_config()
+        use_ip = ("IP" in index_type)
+        do_norm = bool(faiss_cfg.get("normalize", True) and use_ip)
+
+        # Normalize BEFORE training and adding if we want cosine with IP
+        if do_norm:
+            faiss.normalize_L2(X)
+
+        # Build base index (with safety for small datasets if IVF requested)
         if index_type == "IndexFlatIP":
-            self.index = faiss.IndexFlatIP(self.dimension)
+            base = faiss.IndexFlatIP(self.dimension)
         elif index_type == "IndexFlatL2":
-            self.index = faiss.IndexFlatL2(self.dimension)
+            base = faiss.IndexFlatL2(self.dimension)
         elif index_type.startswith("IndexIVF"):
-            # Index avec quantification pour de gros datasets
-            nlist = min(100, len(embeddings_matrix) //
-                        10)  # Nombre de clusters
-            if index_type == "IndexIVFFlat":
-                quantizer = faiss.IndexFlatIP(self.dimension)
-                self.index = faiss.IndexIVFFlat(
-                    quantizer, self.dimension, nlist)
+            # rough rule: need enough vectors to train
+            nlist = min(max(1, faiss_cfg.get("nlist", 100)), max(1, n // 10))
+            quantizer = faiss.IndexFlatIP(
+                self.dimension) if use_ip else faiss.IndexFlatL2(self.dimension)
+            base = faiss.IndexIVFFlat(quantizer, self.dimension, nlist)
+            if n < max(1000, nlist * 5):
+                # not enough to train IVF reliably → fallback to flat
+                print("Dataset trop petit pour IVF ⇒ fallback vers IndexFlat")
+                base = faiss.IndexFlatIP(
+                    self.dimension) if use_ip else faiss.IndexFlatL2(self.dimension)
             else:
-                raise ValueError(f"Type d'index non supporté: {index_type}")
-
-            # Entraîne l'index IVF
-            self.index.train(embeddings_matrix)
+                base.train(X)
         else:
             raise ValueError(f"Type d'index non supporté: {index_type}")
 
-        # Normalise les vecteurs si nécessaire (pour cosine similarity avec IP)
-        if settings.get_faiss_config()["normalize"] and "IP" in index_type:
-            faiss.normalize_L2(embeddings_matrix)
+        # Wrap with IDMap to preserve your external IDs
+        self.index = faiss.IndexIDMap2(base)
+        ids_np = np.asarray(idmap_data["ids"], dtype=np.int64)
+        self.index.add_with_ids(X, ids_np)
 
-        # Ajoute les embeddings à l'index
-        self.index.add(embeddings_matrix)
-
-        # Stocke les métadonnées
+        # Sidecar data
         self.idmap = idmap_data
         self.metadata = {
             "index_type": index_type,
             "dimension": self.dimension,
-            "total_vectors": len(embeddings_matrix),
-            "metric": "ip" if "IP" in index_type else "l2",
-            "normalized": settings.get_faiss_config()["normalize"] and "IP" in index_type
+            "total_vectors": int(n),
+            "metric": "ip" if use_ip else "l2",
+            "normalized": bool(do_norm),
+            # optional for visibility:
+            "normalize": bool(faiss_cfg.get("normalize", True)),
         }
 
-        print(f"Index créé avec {len(embeddings_matrix)} vecteurs")
+        print(f"Index créé avec {n} vecteurs")
 
     def _prepare_data(self, embeddings_dict: Dict[str, Dict[str, Any]]) -> Tuple[np.ndarray, Dict]:
-        """
-        Prépare les données pour FAISS
-        
-        Args:
-            embeddings_dict: Dictionnaire des embeddings
-            
-        Returns:
-            Tuple (matrice embeddings, données idmap)
-        """
-        # Trie par ID pour ordre consistant
         sorted_items = sorted(embeddings_dict.items(), key=lambda x: int(x[0]))
 
-        embeddings_list = []
-        ids = []
-        content = []
-        subject = []
-        source = []
-        ordinal = []
+        embeddings_list, ids = [], []
+        content, subject, source, ordinal = [], [], [], []
 
         for i, (chunk_id, data) in enumerate(sorted_items):
-            embeddings_list.append(data["embedding"])
+            # If your embedder uses "vector", change to data["vector"]
+            vec = data["embedding"]
+            embeddings_list.append(vec)
             ids.append(int(chunk_id))
             content.append(data.get("content", ""))
-            subject.append(data.get("section", ""))  # section devient subject
+            subject.append(data.get("section", ""))  # section -> subject
             source.append(data.get("source", ""))
-            ordinal.append(i)  # Ordre naturel
+            ordinal.append(i)
 
-        # Convertit en matrice numpy
         embeddings_matrix = np.array(embeddings_list, dtype=np.float32)
 
-        # Structure idmap compatible avec votre code
         idmap_data = {
             "ids": ids,
             "content": content,
             "subject": subject,
             "source": source,
-            "ordinal": ordinal
+            "ordinal": ordinal,
         }
-
         return embeddings_matrix, idmap_data
 
 
     def save_index(self) -> None:
-        """
-        Persist FAISS index + sidecar files to disk.
-        Ensures target directories exist.
-        """
         if self.index is None:
             raise RuntimeError("FAISS index not built")
         if self.idmap is None:
@@ -146,17 +130,13 @@ class FAISSIndexer:
         idmap_path = Path(settings.idmap_path)
         meta_path = Path(settings.metadata_path)
 
-        # make sure folders exist
         idx_path.parent.mkdir(parents=True, exist_ok=True)
         idmap_path.parent.mkdir(parents=True, exist_ok=True)
         meta_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # write FAISS binary
         faiss.write_index(self.index, str(idx_path))
-
-        # write sidecars
         save_json(self.idmap, idmap_path)
-        save_json(self.metadata, meta_path)  # <-- was self.meta (bug)
+        save_json(self.metadata, meta_path)
         
     def load_index(self, index_path: Optional[Path] = None,
                     idmap_path: Optional[Path] = None,

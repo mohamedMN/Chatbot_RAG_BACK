@@ -128,7 +128,8 @@ class RAGSettings:
             "min_cosine": 0.28,
             "min_final": 0.35,
             "llm_rerank": True,
-            "llm_rerank_k": 10
+            "llm_rerank_k": 10,
+            "simple_mode": True,   # ← passe à True pour la phase “sans filtres”
         }
 
     def get_faiss_config(self) -> dict:

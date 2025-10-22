@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from time import perf_counter
 from typing import Optional, Dict, Any
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
@@ -14,8 +15,12 @@ from .runtime_llm import get_active_llm, STATE as RUNTIME_LLM_STATE
 from rag.retriever import RAGRetriever
 from rag.generator import RAGGenerator
 from rag.helpers import format_context_for_llm
+from rag.retriever_workspace import WorkspaceRetriever
 
 from utils.workspaces import ensure_workspace, load_runtime_from_workspace
+from utils.logger import get_logger
+log = get_logger(__name__)
+
 
 router = APIRouter()
 
@@ -29,12 +34,29 @@ def _current_user(request: Request) -> Optional[dict]:
     return _parse_session(request.cookies.get(_SESSION_COOKIE))
 
 
-def _ensure_session(sb, user: Optional[dict], session_id: Optional[str]) -> str:
+def _ensure_session(sb, user, session_id: str | None) -> str:
     if session_id:
+        # existe déjà ?
+        try:
+            r = sb.table("sessions").select("id").eq("id", session_id).single().execute()
+            if r.data:
+                return session_id
+        except Exception:
+            pass
+        # sinon on l'insère avec le même id
+        sb.table("sessions").insert({
+            "id": session_id,
+            "user_id": user.get("user_id") if user else None,
+            "email": user.get("email") if user else None,
+            "started_at": datetime.now(timezone.utc).isoformat(),
+        }).execute()
         return session_id
+
+    # cas normal: pas d'id => on crée
     r = sb.table("sessions").insert({
         "user_id": user.get("user_id") if user else None,
         "email": user.get("email") if user else None,
+        "started_at": datetime.now(timezone.utc).isoformat(),
     }).execute()
     return r.data[0]["id"]
 
@@ -52,6 +74,8 @@ def _get_generator() -> RAGGenerator:
 @router.post("", response_model=AskResponse, summary="Ask global index", tags=["ask"])
 def ask(payload: AskRequest, request: Request) -> AskResponse:
     try:
+        if _retriever.runtime_data is None:
+            _retriever.load_runtime()
         user = _current_user(request)
         query = (payload.q or "").strip()
         if not query:
@@ -73,6 +97,8 @@ def ask(payload: AskRequest, request: Request) -> AskResponse:
                 "email": user.get("email") if user else None,
                 "role": "user",
                 "content": query,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+
             }).execute()
         except Exception:
             pass
@@ -184,13 +210,14 @@ def ask_workspace(payload: AskWorkspaceRequest, request: Request) -> AskResponse
             raise HTTPException(
                 status_code=400, detail="session_id is required for workspace ask")
 
-        # workspace must exist & be built
+        # Workspace doit exister
         try:
             ensure_workspace(ws_id)
         except FileNotFoundError:
             raise HTTPException(
                 status_code=404, detail="Workspace not found for this session")
 
+        # Charger runtime
         try:
             runtime = load_runtime_from_workspace(ws_id)
         except FileNotFoundError:
@@ -201,9 +228,9 @@ def ask_workspace(payload: AskWorkspaceRequest, request: Request) -> AskResponse
         min_score = payload.min_score or 0.3
 
         sb = get_supabase()
-        session_id = _ensure_session(sb, user, ws_id)  # keep == ws_id
+        session_id = _ensure_session(sb, user, ws_id)
 
-        # log user msg
+        # Log user msg
         try:
             sb.table("messages").insert({
                 "session_id": session_id,
@@ -215,27 +242,42 @@ def ask_workspace(payload: AskWorkspaceRequest, request: Request) -> AskResponse
         except Exception:
             pass
 
-        # bind retriever to workspace runtime
+        # ✅ UTILISER WorkspaceRetriever au lieu de RAGRetriever
         t0 = perf_counter()
-        retr = RAGRetriever()
-        retr.runtime_data = runtime
+
+        retr = WorkspaceRetriever()
+        if not retr.load_runtime(runtime):
+            raise HTTPException(
+                status_code=500,
+                detail="Échec chargement du retriever workspace"
+            )
+
         hits_raw = retr.retrieve(query, top_k=top_k, min_score=min_score)
+
+        # Fallback si pas assez de résultats
         if not hits_raw and min_score > 0.2:
+            log.info(f"Retry avec min_score=0.2 (avant: {min_score})")
             hits_raw = retr.retrieve(query, top_k=top_k, min_score=0.2)
+
         hits = [Hit(**h) for h in hits_raw]
 
+        log.info(
+            f"✓ Retrieve workspace: {len(hits)} hits en {perf_counter()-t0:.2f}s")
+
+        # Context pour affichage
         context_str = None
         if payload.include_context and hits:
             context_str = format_context_for_llm(
                 [h.model_dump() for h in hits])
 
-        # generate
+        # ✅ Générer réponse
         gen = _get_generator()
         answer = gen.generate_answer(
             question=query,
             context_hits=[h.model_dump() for h in hits],
             max_chars=2000,
         )
+
         latency_ms = int((perf_counter() - t0) * 1000)
 
         # KPIs
@@ -245,7 +287,7 @@ def ask_workspace(payload: AskWorkspaceRequest, request: Request) -> AskResponse
             if scrs:
                 avg_similarity = sum(scrs) / len(scrs)
 
-        # log assistant msg
+        # Log assistant msg
         try:
             sb.table("messages").insert({
                 "session_id": session_id,
@@ -257,7 +299,7 @@ def ask_workspace(payload: AskWorkspaceRequest, request: Request) -> AskResponse
         except Exception:
             pass
 
-        # log answer
+        # Log answer
         try:
             sb.table("answers").insert({
                 "session_id": session_id,

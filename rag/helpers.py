@@ -23,7 +23,58 @@ def norm(vec: np.ndarray) -> np.ndarray:
     n[n == 0] = 1.0
     return a / n
 
+# rag/helpers.py
 
+
+def format_context_for_llm(
+    hits: List[Dict[str, Any]],
+    max_chars: int = 1500,
+    simple_format: bool = False  # ✅ NOUVEAU
+) -> str:
+    """Format context hits for LLM consumption."""
+    if not hits:
+        return "Aucun contexte pertinent trouvé."
+
+    context_parts = []
+    current_length = 0
+
+    for i, hit in enumerate(hits, 1):
+        content = hit.get('content', '').strip()
+
+        if not content:
+            continue
+
+        # ✅ Format simplifié pour petits modèles
+        if simple_format:
+            # Juste le contenu, pas de métadonnées
+            formatted = f"[#{i}] {content}\n"
+        else:
+            # Format complet
+            subject = hit.get('subject', 'Information')
+            source = hit.get('source', 'Document')
+            if '\\' in source:
+                source = source.split('\\')[-1]
+            elif '/' in source:
+                source = source.split('/')[-1]
+            formatted = f"[#{i}] {subject}\n{content}\n(Source: {source})\n"
+
+        # Check length
+        if current_length + len(formatted) > max_chars:
+            if i == 1:
+                # Tronquer si premier chunk trop long
+                available = max_chars - 50
+                content = content[:available] + "..."
+                formatted = f"[#{i}] {content}\n"
+            else:
+                break
+
+        context_parts.append(formatted)
+        current_length += len(formatted)
+
+    if not context_parts:
+        return "Aucun contexte pertinent trouvé."
+
+    return "\n---\n".join(context_parts) if not simple_format else "\n".join(context_parts)
 
 
 def sources_list(hits: List[Dict], max_items: int = 8) -> str:
@@ -223,48 +274,3 @@ def validate_hit(hit: Dict[str, Any]) -> bool:
     return True
 
 
-def format_context_for_llm(
-    hits: List[Dict[str, Any]],
-    max_chars: int = 1500
-) -> str:
-    """Format context hits for LLM consumption"""
-    if not hits:
-        return "Aucun contexte pertinent trouvé."
-
-    context_parts = []
-    current_length = 0
-
-    for i, hit in enumerate(hits, 1):
-        subject = hit.get('subject', 'Information')
-        content = hit.get('content', '').strip()
-        source = hit.get('source', 'Document')
-
-        # Extract just filename from path
-        if '\\' in source:
-            source = source.split('\\')[-1]
-        elif '/' in source:
-            source = source.split('/')[-1]
-
-        if not content:
-            continue
-
-        # Format hit
-        formatted = f"[#{i}] {subject}\n{content}\n(Source: {source})\n"
-
-        # Check length
-        if current_length + len(formatted) > max_chars:
-            if i == 1:
-                # Truncate first hit if it's too long
-                available = max_chars - current_length - 50
-                content = content[:available] + "..."
-                formatted = f"[#{i}] {subject}\n{content}\n(Source: {source})\n"
-            else:
-                break
-
-        context_parts.append(formatted)
-        current_length += len(formatted)
-
-    if not context_parts:
-        return "Aucun contexte pertinent trouvé."
-
-    return "\n---\n".join(context_parts)

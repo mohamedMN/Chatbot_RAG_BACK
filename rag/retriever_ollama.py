@@ -1,10 +1,12 @@
+# rag/retriever_ollama.py
 from __future__ import annotations
+
 from typing import Dict, List, Any, Optional, Tuple
 import numpy as np
 import re
 
 from indexing.faiss_indexer import FAISSIndexer
-from core.embedder_selector import get_embedder
+from core.embedder_selector import get_embedder  # ton routeur d'embedder
 
 _WORD = re.compile(r"[0-9A-Za-zÀ-ÖØ-öø-ÿ_]+")
 
@@ -34,8 +36,9 @@ class RAGOllamaRetriever:
 
     def __init__(self, faiss_indexer: Optional[FAISSIndexer] = None):
         self.faiss = faiss_indexer or FAISSIndexer()
-        self.embedder = get_embedder()  # LM Studio
+        self.embedder = get_embedder()  # (LM Studio / autre)
         self.runtime: Optional[Dict[str, Any]] = None
+
         # weights
         self.w_sim = 0.7
         self.w_kw = 0.3
@@ -48,9 +51,8 @@ class RAGOllamaRetriever:
         return True
 
     def retrieve(self, query: str, top_k: int = 5, min_score: float = 0.30) -> List[Dict[str, Any]]:
-        if not self.runtime:
-            if not self.load_runtime():
-                return []
+        if not self.runtime and not self.load_runtime():
+            return []
 
         rd = self.runtime
         index = rd["index"]
@@ -60,7 +62,7 @@ class RAGOllamaRetriever:
         q_vec = self.embedder.embed([query])[0]
         qv = np.asarray(q_vec, dtype="float32").reshape(1, -1)
 
-        # Dimension safety (prevents faiss AssertionError)
+        # Dimension safety (évite AssertionError FAISS)
         faiss_d = getattr(index, "d", None)
         if faiss_d is not None and int(qv.shape[1]) != int(faiss_d):
             raise ValueError(
@@ -68,7 +70,7 @@ class RAGOllamaRetriever:
                 "Rebuild the FAISS index with the current embedding model."
             )
 
-        # Normalize if index metric is IP and vectors are expected normalized
+        # Normalize if IP
         use_ip = str(meta.get("metric", "")).lower() == "ip"
         if use_ip and bool(meta.get("normalized", True)):
             n = float(np.linalg.norm(qv))
@@ -89,6 +91,7 @@ class RAGOllamaRetriever:
             row = id_to_row.get(int(fid))
             if row is None or s < self.min_sim:
                 continue
+
             content = str(idmap["content"][row])
             subject = str(idmap["subject"][row])
             source = str(idmap["source"][row])

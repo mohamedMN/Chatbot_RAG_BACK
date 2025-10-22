@@ -14,6 +14,8 @@ from .ask import router as ask_router       # public
 from .admin import router as admin_router   # protected via x-admin-key
 from .runtime_llm import router as llm_router  # LLM management
 from .workspaces import router as workspaces_router  # LLM management
+from api.history import router as history_router
+from api.metrics import metrics_router
 
 api_router = APIRouter()
 log = logging.getLogger("chatbot_rag.api")
@@ -24,6 +26,8 @@ api_router.include_router(ask_router,  prefix="/ask")
 api_router.include_router(admin_router, prefix="/admin", tags=["admin"])
 api_router.include_router(workspaces_router)
 api_router.include_router(llm_router)  # Already has prefix="/llm" in the file
+api_router.include_router(history_router)# Already has prefix="/ask" in the file
+api_router.include_router(metrics_router)
 
 # ---------- /api/warmup ----------
 

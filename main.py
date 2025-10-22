@@ -35,6 +35,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 
 from config.settings import settings
+from utils.logger import init_logging, get_logger, install_global_excepthook
 
 # ---- Import API router (fail fast with fallback)
 try:
@@ -74,38 +75,15 @@ except Exception:
 
 
 # ---------- Logging: write to log.txt AND keep console output ----------
-LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG").upper()
+
+LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG")
 LOG_FILE = Path(__file__).parent / "log.txt"
 
-# Configure our root logger with two handlers
-handlers: List[logging.Handler] = [
-    logging.FileHandler(LOG_FILE, mode="a", encoding="utf-8"),
-    logging.StreamHandler()
-]
-logging.basicConfig(
-    level=LOG_LEVEL,
-    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-    handlers=handlers,
-)
+# sets up root + uvicorn + file+console
+init_logging(level=LOG_LEVEL, file_path=LOG_FILE)
+install_global_excepthook()
 
-logging.captureWarnings(True)
-
-
-def _excepthook(exc_type, exc_value, exc_tb):
-    logging.getLogger("unhandled").error("Uncaught exception",
-                                         exc_info=(exc_type, exc_value, exc_tb))
-
-
-sys.excepthook = _excepthook
-
-# make sure uvicorn loggers are verbose too
-for _name in ("uvicorn", "uvicorn.error", "uvicorn.access"):
-    lg = logging.getLogger(_name)
-    lg.setLevel(LOG_LEVEL)
-    lg.propagate = True  # let them bubble to root (so they hit your handlers)
-
-log = logging.getLogger("chatbot_rag.main")
-
+log = get_logger("chatbot_rag.main")
 
 # ---------- ORJSON (pretty/safe) ----------
 def _orjson_dumps_pretty(v: Any) -> bytes:
@@ -245,8 +223,9 @@ async def _do_warmup_first_request() -> Dict[str, Any]:
 # ---------- Lifespan ----------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    print("🚀 Initialisation du LLM...")
     prov = (os.getenv("LLM_PROVIDER") or "").lower().strip()
-    if prov in ("groq", "ollama"):
+    if prov in ("groq", "lmstudio"):
         try:
             _start_provider(prov)
             print(f"[startup] LLM provider started: {prov}")
